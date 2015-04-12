@@ -1,6 +1,6 @@
 # Publish over Dropbox plugin for Jenkins
 
-Based on publish-to-ftp and extending publish-to and basic-credentials this Jenkins plugin publishes artifacts in a post-build to dropbox folders without running a syncing client on your build server.
+Based on publish-to-ftp and extending publish-to and basic-credentials this Jenkins plugin publishes artifacts in a post-build to dropbox folders without the need to run a sync client on your build server.
 
 # Installation
 
@@ -12,24 +12,22 @@ There are 3 options:
 
 # Configuration
 
-To publish artifacts to a Dropbox location there are three levels of configuration. Each level is dependent on the previous. 
+To publish artifacts to a Dropbox there are three levels of configuration. Each level is dependent on the previous. 
 
-Tip: Consult the help at each input field.
+### Link an account
 
-### Create account credentials
-
-The highest level is connecting a Dropbox account to Jenkins. Dropbox account can be created in the **Jenkins > Credentials**.
+The highest level is connecting a Dropbox account to Jenkins. Dropbox account connections can be created in the **Jenkins > Credentials**.
 
 <img src="resources/documentation/01-credentials.png"/>
 
-### Create locations
+### Create a location
 
-The second level is to create locations for an account. Locations can be created in **Jenkins > Manage Jenkins > Configure System**.
+The second level is to create a location for a previously linked account. Locations can be created in **Jenkins > Manage Jenkins > Configure System**.
 
 <img src="resources/documentation/02-location.png"/>
 
-### Create job post build steps
+### Publish files
 
-The last level is to actual publish file to a Dropbox location. Publishing can be done as **Post-build Actions** in your project configuration.
+The last level is to actual publish files to a Dropbox location. Publishing can be done as **Post-build Actions** in your build job configuration.
 
 <img src="resources/documentation/03-postbuild.png"/>

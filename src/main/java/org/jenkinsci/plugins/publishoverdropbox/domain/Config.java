@@ -28,7 +28,7 @@ public class Config {
     static final String CLIENT_SECRET = "y55rmnmy9uyw0p2";
     private static final String authorizeUrl = "https://www.dropbox.com/1/oauth2/authorize?response_type=code&client_id=" + CLIENT_ID;
 
-    public static String getEncodedAuthorizeUrl() {
+    public static String getAuthorizeUrl() {
         return authorizeUrl;
     }
 }

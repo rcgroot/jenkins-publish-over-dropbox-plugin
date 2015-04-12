@@ -34,7 +34,7 @@
         <f:select/>
     </f:entry>
     <f:entry title="${m.remotePath()}" field="remoteRootDir">
-        <f:textbox/>
+        <f:textbox default="/"/>
     </f:entry>
     <f:advanced>
         <f:entry title="${m.timeout()}" field="timeout">

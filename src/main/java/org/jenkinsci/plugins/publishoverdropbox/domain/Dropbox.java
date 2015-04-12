@@ -86,7 +86,9 @@ public class Dropbox {
     public boolean changeWorkingDirectory(String relative) throws IOException {
         boolean hasSuccess = true;
         try {
-            workingFolder = retrieveFolderMetaData(relative);
+            if (!StringUtils.isEmpty(relative)) {
+                workingFolder = retrieveFolderMetaData(relative);
+            }
         } catch (IOException e) {
             hasSuccess = false;
         }
@@ -274,7 +276,11 @@ public class Dropbox {
             if (workingFolder != null) {
                 sb.append(workingFolder.getPath());
             }
-            sb.append(PATH_SEPERATOR);
+
+            // When working folder is the root the path could end with '/'
+            if (sb.length() == 0 || !PATH_SEPERATOR.equals(sb.substring(sb.length() - 1))) {
+                sb.append(PATH_SEPERATOR);
+            }
             sb.append(path);
         }
 

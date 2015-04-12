@@ -66,6 +66,11 @@ public class DropboxHostConfigurationDescriptor extends Descriptor<DropboxHostCo
         return FormValidation.validateNonNegativeInteger(value);
     }
 
+    public FormValidation doCheckRemoteRootDir(@QueryParameter String remoteRootDir) {
+        if (remoteRootDir.matches("/.*")) return FormValidation.ok();
+        else return FormValidation.error(Messages.hostconfig_formvalidation_root());
+    }
+
     public ListBoxModel doFillTokenItems() {
         ListBoxModel items = new ListBoxModel();
         for (DropboxToken token : getDropboxTokens()) {

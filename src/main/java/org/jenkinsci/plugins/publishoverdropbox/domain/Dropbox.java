@@ -232,6 +232,9 @@ public class Dropbox {
     }
 
     public static String convertAuthorizationToAccessCode(String authorizationCode) throws IOException {
+        if (StringUtils.isEmpty(authorizationCode)) {
+            return "";
+        }
         URL url = getUrl(URL_TOKEN);
         String body = new FormBuilder()
                 .appendQueryParameter("code", authorizationCode)

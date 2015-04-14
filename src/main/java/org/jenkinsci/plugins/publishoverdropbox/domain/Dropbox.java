@@ -24,8 +24,12 @@
 
 package org.jenkinsci.plugins.publishoverdropbox.domain;
 
+import com.cloudbees.plugins.credentials.CredentialsProvider;
+import com.cloudbees.plugins.credentials.domains.DomainRequirement;
 import com.google.gson.Gson;
+import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.publishoverdropbox.DropboxToken;
 import org.jenkinsci.plugins.publishoverdropbox.domain.model.*;
 import org.jenkinsci.plugins.publishoverdropbox.impl.Messages;
 
@@ -35,6 +39,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.util.List;
 import java.util.Locale;
 
 
@@ -237,6 +242,16 @@ public class Dropbox {
         if (StringUtils.isEmpty(authorizationCode)) {
             return "";
         }
+        String accessToken = readAccessTokenFromProvider(authorizationCode);
+        if (accessToken == null) {
+            accessToken = readAccessTokenFromWeb(authorizationCode);
+        }
+
+        return accessToken;
+    }
+
+    private static String readAccessTokenFromWeb(String authorizationCode) throws RestException, UnsupportedEncodingException {
+        String accessToken;
         URL url = getUrl(URL_TOKEN);
         String body = new FormBuilder()
                 .appendQueryParameter("code", authorizationCode)
@@ -247,7 +262,19 @@ public class Dropbox {
         String contentType = FormBuilder.CONTENT_TYPE;
         JsonObjectRequest<TokenResponse> request = new JsonObjectRequest<TokenResponse>(url, body, contentType, gson, TokenResponse.class);
         TokenResponse response = request.execute();
-        return response.getAccessToken();
+        accessToken = response.getAccessToken();
+        return accessToken;
+    }
+
+    private static String readAccessTokenFromProvider(String authorizationCode) {
+        String accessToken = null;
+        List<DropboxToken> tokens = CredentialsProvider.lookupCredentials(DropboxToken.class, Jenkins.getInstance(), null, (DomainRequirement) null);
+        for (DropboxToken token : tokens) {
+            if (token.getAuthorizationCode().equals(authorizationCode)) {
+                accessToken = token.getAccessCode();
+            }
+        }
+        return accessToken;
     }
 
     private static URL getUrl(String urlSource) throws RestException {

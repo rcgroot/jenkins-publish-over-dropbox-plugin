@@ -75,7 +75,7 @@ public class DropboxHostConfiguration extends BPHostConfiguration<DropboxClient,
     public void setToken(final DropboxToken token) {
         this.token = token;
     }
-    
+
     @Override
     public DropboxClient createClient(final BPBuildInfo buildInfo) {
         final DropboxClient client = new DropboxClient(createDropbox(), buildInfo);

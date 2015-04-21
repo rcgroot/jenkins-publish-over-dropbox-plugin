@@ -39,6 +39,9 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -62,6 +65,7 @@ public class Dropbox {
     public static final String VALUE_TRUE = "true";
     public static final String VALUE_FALSE = "false";
     public static final String VALUE_AUTHORIZATION_CODE = "authorization_code";
+    public static final long MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
     private final String accessToken;
     private AccountInfo userInfo;
     private int timeout = -1;
@@ -202,10 +206,27 @@ public class Dropbox {
                 if (!deletedFile.isDeleted()) {
                     throw new IOException(Messages.exception_dropbox_delete());
                 }
-
             }
         } else {
             throw new IOException(Messages.exception_dropbox_deleteIsNotFolder());
+        }
+    }
+
+    public void pruneFolder(String absoluteRemoteRoot, int pruneRootDays) throws IOException {
+        SimpleDateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z", Locale.US);
+        Date cutoff = new Date(System.currentTimeMillis() - pruneRootDays * MILLISECONDS_PER_DAY);
+        Folder root = retrieveFolderMetaData(absoluteRemoteRoot);
+        if (root.isDir()) {
+            for (BaseFile file : root.getContents()) {
+                Date lastModified;
+                try {
+                    lastModified = df.parse(file.getModified());
+                } catch (ParseException e) {
+                    throw new IOException("Was unable to read Dropbox date format", e);
+                }
+                if (lastModified.before(cutoff))
+                    deleteFile(file);
+            }
         }
     }
 

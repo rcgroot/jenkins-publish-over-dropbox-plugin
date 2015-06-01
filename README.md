@@ -6,8 +6,14 @@ Based on publish-to-ftp and extending publish-to and basic-credentials this Jenk
 
 There are 3 options:
 
-1. Run the maven hpi:run on the project source code
-2. Install a pre-build publish-over-dropbox.hpi in the advanced section of the plugin manager of your Jenkins installation. The latest build is available at: https://github.com/rcgroot/jenkins-publish-over-dropbox-plugin/releases/tag/1.0-rc1
+1. Compile your own
+  1. Create an own Dropbox app in the on https://developer.dropbox.com/
+  2. Clone the sources and update the Config.java with your personal client id and client secret.
+  3. Run the "maven hpi:hpi" on the project source code
+  4. Install the generated publish-over-dropbox.hpi on the advanced section of the plugin manager of your Jenkins installation.
+2. Install a beta  (Not available at this time)
+   1. Download the latest build is available at:   https://github.com/rcgroot/jenkins-publish-over-dropbox-plugin/releases/tag/1.0-rc1
+   2. Install a pre-build publish-over-dropbox.hpi in the advanced section of the plugin manager of your Jenkins installation.
 3. Install the plugin through the plugin manager. (Not available at this time)
 
 # Configuration

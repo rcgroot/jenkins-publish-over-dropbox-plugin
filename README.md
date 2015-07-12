@@ -11,10 +11,10 @@ There are 3 options:
   2. Clone the sources and update the Config.java with your personal client id and client secret.
   3. Run the "maven hpi:hpi" on the project source code
   4. Install the generated publish-over-dropbox.hpi on the advanced section of the plugin manager of your Jenkins installation.
-2. Install a beta  (Not available at this time)
-   1. Download the latest build is available at:   https://github.com/rcgroot/jenkins-publish-over-dropbox-plugin/releases/tag/1.0-rc1
-   2. Install a pre-build publish-over-dropbox.hpi in the advanced section of the plugin manager of your Jenkins installation.
-3. Install the plugin through the plugin manager. (Not available at this time)
+2. Install a beta
+   1. Download the latest build is available at:   https://github.com/rcgroot/jenkins-publish-over-dropbox-plugin/releases/tag/1.0-rc2
+   2. Install a pre-build publish-over-dropbox-rc2.hpi in the advanced section of the plugin manager of your Jenkins installation.
+3. ~~Install the plugin through the plugin manager.~~ (Not available at this time)
 
 # Configuration
 

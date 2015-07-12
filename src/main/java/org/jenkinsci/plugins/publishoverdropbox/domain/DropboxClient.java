@@ -84,8 +84,16 @@ public class DropboxClient extends BPDefaultClient<DropboxTransfer> {
     }
 
     public void beginTransfers(final DropboxTransfer transfer) {
-        if (!transfer.hasConfiguredSourceFiles())
+        if (!transfer.hasConfiguredSourceFiles()) {
             throw new BapPublisherException(Messages.exception_noSourceFiles());
+        }
+        if (transfer.isRemoteDirectorySDF() && transfer.isPruneRoot()) {
+            try {
+                dropbox.pruneFolder(getAbsoluteRemoteRoot(), transfer.getPruneRootDays());
+            } catch (IOException ioe) {
+                throw new BapPublisherException(Messages.exception_failedToStoreFile("Pruning failed"), ioe);
+            }
+        }
     }
 
     public void transferFile(final DropboxTransfer transfer, final FilePath filePath, final InputStream content) {

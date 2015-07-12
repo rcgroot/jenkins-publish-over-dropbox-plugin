@@ -54,13 +54,20 @@
             <f:checkbox/>
         </f:entry>
 
-        <f:entry title="${%remoteDirectorySDF.title}" field="remoteDirectorySDF">
-            <f:checkbox/>
-        </f:entry>
-
         <f:entry title="${%cleanRemote.title}" field="cleanRemote">
             <f:checkbox/>
         </f:entry>
+
+        <f:block>
+            <f:optionalBlock title="${%remoteDirectorySDF.title}" field="remoteDirectorySDF" inline="true">
+                <f:optionalBlock title="${%pruneRoot.title}" field="pruneRoot" inline="true">
+                    <f:entry title="${%pruneDays.title}">
+                        <f:textbox default="31" field="pruneRootDays"/>
+                    </f:entry>
+                </f:optionalBlock>
+            </f:optionalBlock>
+        </f:block>
+
 
     </f:advanced>
 

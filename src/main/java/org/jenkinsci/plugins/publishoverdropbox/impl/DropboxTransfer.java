@@ -38,17 +38,23 @@ public class DropboxTransfer extends BPTransfer implements Describable<DropboxTr
 
 
     private static final long serialVersionUID = 1L;
-
-
-    public DropboxTransfer(final String sourceFiles, final String remoteDirectory, final String removePrefix,
-                           final boolean remoteDirectorySDF, final boolean flatten, final boolean cleanRemote) {
-        this(sourceFiles, null, remoteDirectory, removePrefix, remoteDirectorySDF, flatten, cleanRemote);
-    }
+    private final boolean pruneRoot;
+    private final int pruneRootDays;
 
     @DataBoundConstructor
     public DropboxTransfer(final String sourceFiles, final String excludes, final String remoteDirectory, final String removePrefix,
-                           final boolean remoteDirectorySDF, final boolean flatten, final boolean cleanRemote) {
+                           final boolean remoteDirectorySDF, final boolean flatten, final boolean cleanRemote, final boolean pruneRoot, final int pruneRootDays) {
         super(sourceFiles, excludes, remoteDirectory, removePrefix, remoteDirectorySDF, flatten, cleanRemote, false, false, null);
+        this.pruneRoot = pruneRoot;
+        this.pruneRootDays = pruneRootDays;
+    }
+
+    public int getPruneRootDays() {
+        return pruneRootDays;
+    }
+
+    public boolean isPruneRoot() {
+        return pruneRoot;
     }
 
     public static boolean canUseExcludes() {

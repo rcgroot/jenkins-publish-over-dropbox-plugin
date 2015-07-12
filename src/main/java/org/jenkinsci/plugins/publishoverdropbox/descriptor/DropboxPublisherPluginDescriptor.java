@@ -37,7 +37,6 @@ import net.sf.json.JSONObject;
 import org.jenkinsci.plugins.publishoverdropbox.impl.DropboxHostConfiguration;
 import org.jenkinsci.plugins.publishoverdropbox.impl.DropboxPublisherPlugin;
 import org.jenkinsci.plugins.publishoverdropbox.impl.Messages;
-import org.jenkinsci.plugins.publishoverdropbox.impl.options.DropboxPluginDefaults;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
@@ -55,18 +54,12 @@ public class DropboxPublisherPluginDescriptor extends BuildStepDescriptor<Publis
      * null - prevent complaints from xstream
      */
     private Class hostConfigClass;
-    private DropboxPluginDefaults defaults = null;
 
     public DropboxPublisherPluginDescriptor() {
         super(DropboxPublisherPlugin.class);
         load();
-        if (defaults == null)
-            defaults = new DropboxPluginDefaults();
     }
 
-    public DropboxPluginDefaults getDefaults() {
-        return defaults;
-    }
 
     public String getDisplayName() {
         return Messages.descriptor_displayName();
@@ -91,8 +84,6 @@ public class DropboxPublisherPluginDescriptor extends BuildStepDescriptor<Publis
 
     public boolean configure(final StaplerRequest request, final JSONObject formData) {
         hostConfigurations.replaceBy(request.bindJSONToList(DropboxHostConfiguration.class, formData.get("instance")));
-        if (isEnableOverrideDefaults())
-            defaults = request.bindJSON(DropboxPluginDefaults.class, formData.getJSONObject("defaults"));
         save();
         return true;
     }
@@ -115,10 +106,6 @@ public class DropboxPublisherPluginDescriptor extends BuildStepDescriptor<Publis
 
     public DropboxHostConfigurationDescriptor getHostConfigurationDescriptor() {
         return Jenkins.getInstance().getDescriptorByType(DropboxHostConfigurationDescriptor.class);
-    }
-
-    public DropboxPluginDefaults.DropboxDefaultsDescriptor getPluginDefaultsDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(DropboxPluginDefaults.DropboxDefaultsDescriptor.class);
     }
 
     public jenkins.plugins.publish_over.view_defaults.BPInstanceConfig.Messages getCommonFieldNames() {
@@ -157,9 +144,6 @@ public class DropboxPublisherPluginDescriptor extends BuildStepDescriptor<Publis
         // nuke the legacy config
         msg = null;
         hostConfigClass = null;
-        if (defaults == null) {
-            defaults = new DropboxPluginDefaults();
-        }
         return this;
     }
 

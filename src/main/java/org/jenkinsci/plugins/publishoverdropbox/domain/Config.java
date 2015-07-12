@@ -24,8 +24,17 @@
 package org.jenkinsci.plugins.publishoverdropbox.domain;
 
 public class Config {
-    static final String CLIENT_ID = "v4v01liia0ojic3";
-    static final String CLIENT_SECRET = "y55rmnmy9uyw0p2";
+    /**
+     * Generate these values by creating your own Dropbox app registration on https://www.dropbox.com/developers/apps
+     * <br/>
+     * Replace the strings values in this file to run your own compiled version of the plugin
+     */
+    static final String CLIENT_ID = "your_app_key";
+    /**
+     * @see Config#CLIENT_ID
+     */
+    static final String CLIENT_SECRET = "your_app_secret";
+
     private static final String authorizeUrl = "https://www.dropbox.com/1/oauth2/authorize?response_type=code&client_id=" + CLIENT_ID;
 
     public static String getAuthorizeUrl() {

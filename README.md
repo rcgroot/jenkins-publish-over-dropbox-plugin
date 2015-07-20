@@ -6,16 +6,15 @@ Based on publish-to-ftp and extending publish-to and basic-credentials this Jenk
 
 There are 3 options:
 
-1. Compile your own
+1. ~~Install the plugin through the Jenkins plugin manager.~~ (Not available at this time)
+2. Install a beta
+   1. Download the latest build is available at:   https://github.com/rcgroot/jenkins-publish-over-dropbox-plugin/releases/tag/1.0-rc2
+   2. Install the pre-build publish-over-dropbox-rc2.hpi in the advanced section of the Jenkins plugin manager on an existing Jenkins install.
+3. Compile your own
   1. Create an own Dropbox app in the on https://developer.dropbox.com/
   2. Clone the sources and update the Config.java with your personal client id and client secret.
   3. Run the "mvn hpi:hpi" on the project source code
   4. Install the generated publish-over-dropbox.hpi on the advanced section of the plugin manager of your Jenkins installation.
-2. Install a beta
-   1. Download the latest build is available at:   https://github.com/rcgroot/jenkins-publish-over-dropbox-plugin/releases/tag/1.0-rc2
-   2. Install a pre-build publish-over-dropbox-rc2.hpi in the advanced section of the plugin manager of your Jenkins installation.
-3. ~~Install the plugin through the plugin manager.~~ (Not available at this time)
-
 # Configuration
 
 To publish artifacts to a Dropbox there are three levels of configuration. Each level is dependent on the previous. 

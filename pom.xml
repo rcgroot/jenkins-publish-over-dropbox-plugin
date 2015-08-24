@@ -28,7 +28,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
     <name>Publish Over Dropbox</name>
     <description>Send build artifacts to Dropbox account</description>
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/Publish+Over+Dropbox+Plugin</url>
+<!--    <url>https://wiki.jenkins-ci.org/display/JENKINS/Publish+Over+Dropbox+Plugin</url> -->
     <licenses>
         <license>
             <name>MIT License</name>

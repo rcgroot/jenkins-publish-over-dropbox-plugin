@@ -23,12 +23,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     </parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>publish-over-dropbox</artifactId>
-    <version>1.0</version>
+    <version>1.0-rc3</version>
     <packaging>hpi</packaging>
 
     <name>Publish Over Dropbox</name>
     <description>Send build artifacts to Dropbox account</description>
-<!--    <url>https://wiki.jenkins-ci.org/display/JENKINS/Publish+Over+Dropbox+Plugin</url> -->
+       <url>https://wiki.jenkins-ci.org/display/JENKINS/Publish+over+Dropbox+Plugin</url>
     <licenses>
         <license>
             <name>MIT License</name>
@@ -45,14 +45,12 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
         </developer>
     </developers>
 
-    <!-- Assuming you want to host on @jenkinsci:
+    <!-- Assuming you want to host on @jenkinsci: -->
     <scm>
       <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
       <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
       <url>http://github.com/jenkinsci/${project.artifactId}-plugin</url>
     </scm>
-     -->
-
 
     <repositories>
         <repository>

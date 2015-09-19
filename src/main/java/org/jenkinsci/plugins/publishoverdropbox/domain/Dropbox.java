@@ -36,6 +36,7 @@ import org.jenkinsci.plugins.publishoverdropbox.impl.Messages;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -274,12 +275,22 @@ public class Dropbox {
     private static String readAccessTokenFromWeb(String authorizationCode) throws RestException, UnsupportedEncodingException {
         String accessToken;
         URL url = getUrl(URL_TOKEN);
-        String body = new FormBuilder()
+        FormBuilder builder = new FormBuilder()
                 .appendQueryParameter("code", authorizationCode)
                 .appendQueryParameter("grant_type", VALUE_AUTHORIZATION_CODE)
-                .appendQueryParameter("client_id", Config.CLIENT_ID)
-                .appendQueryParameter("client_secret", Config.CLIENT_SECRET)
-                .build();
+                .appendQueryParameter("client_id", Config.CLIENT_ID);
+        try {
+            // Apply production config not included in source distribution
+            Class privateConfig = Class.forName("org.jenkinsci.plugins.publishoverdropbox.domain.ConfigPrivate");
+            Class[] argClass = {builder.getClass()};
+            Method method = privateConfig.getDeclaredMethod("append", argClass);
+            method.invoke(null, builder);
+        } catch (Exception e) {
+            // Apply locally development parameters
+            builder.appendQueryParameter("client_secret", Config.CLIENT_SECRET);
+        }
+        String body = builder.build();
+
         String contentType = FormBuilder.CONTENT_TYPE;
         JsonObjectRequest<TokenResponse> request = new JsonObjectRequest<TokenResponse>(url, body, contentType, gson, TokenResponse.class);
         TokenResponse response = request.execute();

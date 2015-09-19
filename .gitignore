@@ -104,3 +104,6 @@ buildNumber.properties
 
 
 work/
+
+# Dropbox production settings not distributed
+src/main/java/org/jenkinsci/plugins/publishoverdropbox/domain/ConfigPrivate.java

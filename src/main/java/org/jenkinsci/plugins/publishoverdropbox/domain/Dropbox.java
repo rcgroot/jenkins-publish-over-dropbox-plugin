@@ -176,7 +176,7 @@ public class Dropbox {
             File file = retrieveFileMetaData(name);
             parentRev = file.getRev();
         } catch (IOException e) {
-            // Ignore, asume file doenst exist
+            // Ignore, assume file doesn't exist
         }
 
         try {
@@ -286,7 +286,7 @@ public class Dropbox {
             Method method = privateConfig.getDeclaredMethod("append", argClass);
             method.invoke(null, builder);
         } catch (Exception e) {
-            // Apply locally development parameters
+            // Apply local development parameters
             builder.appendQueryParameter("client_secret", Config.CLIENT_SECRET);
         }
         String body = builder.build();

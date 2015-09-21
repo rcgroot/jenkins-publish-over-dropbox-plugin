@@ -22,7 +22,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
     </parent>
     <groupId>org.jenkins-ci.plugins</groupId>
     <artifactId>publish-over-dropbox</artifactId>
-    <version>1.0.3-SNAPSHOT</version>
+    <version>1.0.3</version>
     <packaging>hpi</packaging>
 
     <name>Publish Over Dropbox</name>
@@ -49,7 +49,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
       <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
       <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
       <url>http://github.com/jenkinsci/${project.artifactId}-plugin</url>
-      <tag>HEAD</tag>
+      <tag>publish-over-dropbox-1.0.3</tag>
   </scm>
 
     <repositories>

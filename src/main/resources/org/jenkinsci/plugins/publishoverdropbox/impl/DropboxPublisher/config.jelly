@@ -58,9 +58,10 @@
 
     <f:advanced>
         <f:entry field="verbose">
-            <poj:checkbox title="${%verbose.title}"/>
+            <poj:checkbox title="${m.verbose()}" default="${defaults.publisher.verbose}"/>
         </f:entry>
-        <f:optionalProperty title="${%retry.title}" field="retry"/>
+        <f:optionalProperty title="${m.retry()}" field="dropboxRetry"/>
+        <f:optionalProperty title="${m.label()}" field="dropboxLabel"/>
     </f:advanced>
 
     <f:entry title="${m.transfers_section()}">

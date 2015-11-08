@@ -42,16 +42,16 @@ public class DropboxPublisher extends BapPublisher<DropboxTransfer> implements D
 
     @DataBoundConstructor
     public DropboxPublisher(final String configName, final boolean verbose, final ArrayList<DropboxTransfer> transfers,
-                            final boolean useWorkspaceInPromotion, final boolean usePromotionTimestamp, final DropboxRetry retry,
-                            final DropboxPublisherLabel label) {
-        super(configName, verbose, transfers, useWorkspaceInPromotion, usePromotionTimestamp, retry, label, null);
+                            final boolean useWorkspaceInPromotion, final boolean usePromotionTimestamp, final DropboxRetry dropboxRetry,
+                            final DropboxPublisherLabel dropboxLabel) {
+        super(configName, verbose, transfers, useWorkspaceInPromotion, usePromotionTimestamp, dropboxRetry, dropboxLabel, null);
     }
 
-    public DropboxRetry getRetry() {
+    public DropboxRetry getDropboxRetry() {
         return (DropboxRetry) super.getRetry();
     }
 
-    public DropboxPublisherLabel getLabel() {
+    public DropboxPublisherLabel getDropboxLabel() {
         return (DropboxPublisherLabel) super.getLabel();
     }
 

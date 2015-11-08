@@ -6,10 +6,8 @@ Based on publish-to-ftp and extending publish-to and basic-credentials this Jenk
 
 There are 3 options:
 
-1. Install the plugin through the Jenkins plugin manager. (Version 1.0.3 is available at this time)
-2. Install a beta
-   1. Download the latest build is available at:   https://github.com/rcgroot/jenkins-publish-over-dropbox-plugin/releases/tag/1.0-rc2
-   2. Install the pre-build publish-over-dropbox-rc2.hpi in the advanced section of the Jenkins plugin manager on an existing Jenkins install.
+1. Install the plugin through the Jenkins plugin manager. (Version 1.0.5 is available at this time)
+2. ~~Install a beta~~
 3. Compile your own
   1. Create an own Dropbox app in the on https://developer.dropbox.com/
   2. Clone the sources and update the Config.java with your personal client id and client secret.

@@ -29,7 +29,7 @@ import com.cloudbees.plugins.credentials.impl.BaseStandardCredentials;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import org.jenkinsci.plugins.publishoverdropbox.DropboxToken;
-import org.jenkinsci.plugins.publishoverdropbox.domain.Dropbox;
+import org.jenkinsci.plugins.publishoverdropbox.domain.DropboxV2;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import javax.annotation.Nonnull;
@@ -46,7 +46,7 @@ public class DropboxTokenImpl extends BaseStandardCredentials implements Dropbox
     public DropboxTokenImpl(CredentialsScope scope, String id, @Nonnull String authorizationCode, String description) throws IOException {
         super(scope, id, description);
         this.authorizationCode = authorizationCode;
-        this.accessCode = Dropbox.convertAuthorizationToAccessCode(authorizationCode);
+        this.accessCode = DropboxV2.convertAuthorizationToAccessCode(authorizationCode);
     }
 
     @NonNull

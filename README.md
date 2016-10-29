@@ -43,6 +43,8 @@ Also this project builds upon the [credentials-plugin](https://github.com/jenkin
 
 And much inspiration was found in the [publish-over-ftp-plugin](https://github.com/jenkinsci/publish-over-ftp-plugin) by Anthony Robinson
 
+Uses a copy of the [RuntimeTypeAdapterFactory](https://github.com/google/gson/blob/master/extras/src/main/java/com/google/gson/typeadapters/RuntimeTypeAdapterFactory.java) by Google Inc. licensed under the Apache V2 License.
+
 # Licence
 
 The MIT License (MIT)

@@ -24,45 +24,23 @@
 
 package org.jenkinsci.plugins.publishoverdropbox.domain.model;
 
-import com.google.gson.annotations.Expose;
-
-import java.util.ArrayList;
 import java.util.List;
 
-public class Folder extends BaseFile {
+public class FolderContent {
 
-    @Expose
-    private String hash;
+    private List<Metadata> entries;
+    private String cursor;
+    private boolean hasMore;
 
-    @Expose
-    private List<BaseFile> contents = new ArrayList<BaseFile>();
-
-    /**
-     * @return The hash
-     */
-    public String getHash() {
-        return hash;
+    public boolean hasMore() {
+        return hasMore;
     }
 
-    /**
-     * @param hash The hash
-     */
-    public void setHash(String hash) {
-        this.hash = hash;
+    public List<Metadata> getEntries() {
+        return entries;
     }
 
-    /**
-     * @return The contents
-     */
-    public List<BaseFile> getContents() {
-        return contents;
+    public String getCursor() {
+        return cursor;
     }
-
-    /**
-     * @param contents The contents
-     */
-    public void setContents(List<BaseFile> contents) {
-        this.contents = contents;
-    }
-
 }

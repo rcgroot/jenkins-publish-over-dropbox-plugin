@@ -26,24 +26,26 @@ package org.jenkinsci.plugins.publishoverdropbox.domain;
 
 import com.google.gson.Gson;
 import org.apache.commons.io.IOUtils;
-import org.jenkinsci.plugins.publishoverdropbox.domain.model.BaseResponse;
 import org.jenkinsci.plugins.publishoverdropbox.domain.model.RestException;
 import org.jenkinsci.plugins.publishoverdropbox.impl.Messages;
 
+import javax.annotation.Nonnull;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Map;
 
 public class JsonObjectRequest<T> {
 
     private static final String HEADER_CONTENT_TYPE = "Content-Type";
-    public static final String UTF_8 = "UTF-8";
-    public static final String METHOD_POST = "POST";
-    public static final String METHOD_GET = "GET";
-    public static final String OCTET_STREAM = "application/octet-stream";
-    public static final String PARAM_AUTHORIZATION = "Authorization";
-    public static final String VALUE_BEARER = "Bearer ";
-    public static final int TIMEOUT_30_SECONDS = 30000;
+    private static final String UTF_8 = "UTF-8";
+    private static final String METHOD_POST = "POST";
+    private static final String METHOD_GET = "GET";
+    private static final String OCTET_STREAM = "application/octet-stream";
+    private static final String PARAM_AUTHORIZATION = "Authorization";
+    private static final String VALUE_BEARER = "Bearer ";
+    private static final int TIMEOUT_30_SECONDS = 30000;
 
     private final URL url;
     private InputStream bodyStream;
@@ -52,6 +54,8 @@ public class JsonObjectRequest<T> {
     private final Class<T> classOfT;
     private String bearerToken;
     private int timeout = TIMEOUT_30_SECONDS;
+    private Map<String, String> headers = new HashMap<String, String>();
+    private Class classOfError;
 
     public JsonObjectRequest(URL url, Gson gson, Class<T> classOfT) {
         this.url = url;
@@ -76,6 +80,13 @@ public class JsonObjectRequest<T> {
         }
     }
 
+    public void setHeader(@Nonnull String key, @Nonnull String value) {
+        headers.put(key, value);
+    }
+
+    public void setErrorClass(Class classOfError) {
+        this.classOfError = classOfError;
+    }
 
     public T execute() throws RestException {
         T model;
@@ -86,6 +97,9 @@ public class JsonObjectRequest<T> {
             connection = (HttpURLConnection) url.openConnection();
             connection.setReadTimeout(timeout);
             connection.setConnectTimeout(timeout);
+            for (String key : headers.keySet()) {
+                connection.addRequestProperty(key, headers.get(key));
+            }
 
             if (bearerToken != null) {
                 signWithBearerToken(connection);
@@ -101,15 +115,17 @@ public class JsonObjectRequest<T> {
             String responseMessage = connection.getResponseMessage();
             if (responseCode < 200 || responseCode > 299) {
                 errorStream = connection.getErrorStream();
-                model = readModel(errorStream);
-                String description = "";
-                if (model instanceof BaseResponse && ((BaseResponse) model).hasError()) {
-                    description = " : " + ((BaseResponse) model).getErrorDescription();
+                String responseBody;
+                if (classOfError != null) {
+                    Object errorResponse = readModel(gson, errorStream, classOfError);
+                    responseBody = errorResponse.toString();
+                } else {
+                    responseBody = IOUtils.toString(errorStream);
                 }
-                throw new RestException(Messages.exception_rest_http(responseCode, responseMessage, description));
+                throw new RestException(Messages.exception_rest_http(responseCode, responseMessage, responseBody));
             }
             inputStream = connection.getInputStream();
-            model = readModel(inputStream);
+            model = readModel(gson, inputStream, classOfT);
         } catch (IOException e) {
             throw new RestException(Messages.exception_rest_connection(), e);
         } finally {
@@ -153,7 +169,21 @@ public class JsonObjectRequest<T> {
         }
     }
 
-    private void closeQuietly(Closeable closeable) {
+    private static <MODEL> MODEL readModel(Gson gson, InputStream inputStream, Class<MODEL> classOfModel) throws IOException {
+        MODEL model = null;
+        if (inputStream != null) {
+            InputStreamReader reader = null;
+            try {
+                reader = new InputStreamReader(inputStream);
+                model = gson.fromJson(reader, classOfModel);
+            } finally {
+                closeQuietly(reader);
+            }
+        }
+        return model;
+    }
+
+    private static void closeQuietly(Closeable closeable) {
         if (closeable != null) {
             try {
                 closeable.close();
@@ -163,20 +193,6 @@ public class JsonObjectRequest<T> {
         }
     }
 
-    private T readModel(InputStream inputStream) throws IOException {
-        T model = null;
-        if (inputStream != null) {
-            InputStreamReader reader = null;
-            try {
-                reader = new InputStreamReader(inputStream);
-                model = gson.fromJson(reader, classOfT);
-            } finally {
-                closeQuietly(reader);
-            }
-        }
-        return model;
-    }
-
     public void sign(String accessCode) {
         this.bearerToken = accessCode;
     }
@@ -184,4 +200,5 @@ public class JsonObjectRequest<T> {
     public void setTimeout(int timeout) {
         this.timeout = timeout;
     }
+
 }

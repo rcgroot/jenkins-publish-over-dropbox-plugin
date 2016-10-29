@@ -27,47 +27,44 @@ package org.jenkinsci.plugins.publishoverdropbox.domain.model;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class File extends BaseFile {
+public abstract class Metadata {
 
-    @SerializedName("client_mtime")
+    @SerializedName(".tag")
     @Expose
-    private String clientMtime;
+    private String tag;
 
-    @SerializedName("photo_info")
     @Expose
-    private PhotoInfo photoInfo;
+    private String name;
 
-    @SerializedName("mime_type")
     @Expose
-    private String mimeType;
+    private String id;
 
-    /**
-     * @return The photoInfo
-     */
-    public PhotoInfo getPhotoInfo() {
-        return photoInfo;
+    @Expose
+    @SerializedName("path_display")
+    private String pathDisplay;
+    @Expose
+    @SerializedName("path_lower")
+    private String pathLower;
+
+    public String getTag() {
+        return tag;
     }
 
-    /**
-     * @param photoInfo The photo_info
-     */
-    public void setPhotoInfo(PhotoInfo photoInfo) {
-        this.photoInfo = photoInfo;
+    public String getName() {
+        return name;
     }
 
-    /**
-     * @return The mimeType
-     */
-    public String getMimeType() {
-        return mimeType;
+    public String getId() {
+        return id;
     }
 
-    /**
-     * @param mimeType The mime_type
-     */
-    public void setMimeType(String mimeType) {
-        this.mimeType = mimeType;
-    }
+    public abstract boolean isDir();
 
+
+    public abstract boolean isFile();
+
+    public String getPathLower() {
+        return pathLower;
+    }
 
 }

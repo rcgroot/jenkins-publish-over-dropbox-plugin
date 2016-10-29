@@ -30,7 +30,7 @@ import jenkins.plugins.publish_over.BPDefaultClient;
 import jenkins.plugins.publish_over.BapPublisherException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.jenkinsci.plugins.publishoverdropbox.domain.model.Folder;
+import org.jenkinsci.plugins.publishoverdropbox.domain.model.FolderMetadata;
 import org.jenkinsci.plugins.publishoverdropbox.impl.DropboxTransfer;
 import org.jenkinsci.plugins.publishoverdropbox.impl.Messages;
 
@@ -41,10 +41,10 @@ public class DropboxClient extends BPDefaultClient<DropboxTransfer> {
 
     private static final Log LOG = LogFactory.getLog(DropboxClient.class);
     private BPBuildInfo buildInfo;
-    private final Dropbox dropbox;
+    private final DropboxAdapter dropbox;
     private String token;
 
-    public DropboxClient(final Dropbox client, final BPBuildInfo buildInfo) {
+    public DropboxClient(final DropboxV2 client, final BPBuildInfo buildInfo) {
         this.dropbox = client;
         this.buildInfo = buildInfo;
     }
@@ -68,7 +68,7 @@ public class DropboxClient extends BPDefaultClient<DropboxTransfer> {
 
     public boolean makeDirectory(final String directory) {
         try {
-            Folder folder = dropbox.makeDirectory(directory);
+            FolderMetadata folder = dropbox.makeDirectory(directory);
             return folder != null;
         } catch (IOException ioe) {
             throw new BapPublisherException(Messages.exception_mkdirException(directory), ioe);
@@ -77,7 +77,7 @@ public class DropboxClient extends BPDefaultClient<DropboxTransfer> {
 
     public void deleteTree() {
         try {
-            dropbox.cleanFolder();
+            dropbox.cleanWorkingFolder();
         } catch (IOException ioe) {
             throw new BapPublisherException(Messages.exception_failedToStoreFile("Cleaning failed"), ioe);
         }
@@ -98,9 +98,11 @@ public class DropboxClient extends BPDefaultClient<DropboxTransfer> {
 
     public void transferFile(final DropboxTransfer transfer, final FilePath filePath, final InputStream content) {
         try {
-            dropbox.storeFile(filePath.getName(), content);
+            dropbox.storeFile(filePath.getName(), content, filePath.length());
         } catch (IOException ioe) {
             throw new BapPublisherException(Messages.exception_failedToStoreFile("Storing failed"), ioe);
+        } catch (InterruptedException e) {
+            throw new BapPublisherException(Messages.exception_failedToStoreFile("Storing failed"), e);
         }
     }
 

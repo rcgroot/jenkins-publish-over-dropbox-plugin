@@ -26,7 +26,8 @@ package org.jenkinsci.plugins.publishoverdropbox.domain.model;
 
 import com.google.gson.annotations.SerializedName;
 
-public class TokenResponse extends BaseResponse {
+public class TokenResponse {
+
     @SerializedName("access_token")
     private String accessToken;
     @SerializedName("token_type")

@@ -27,23 +27,29 @@ package org.jenkinsci.plugins.publishoverdropbox.domain.model;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class DeletedFile {
+public class ErrorResponse {
 
-    @SerializedName("is_deleted")
     @Expose
-    private Boolean isDeleted;
+    private Error error;
+    @Expose
+    @SerializedName("error_summary")
+    private String errorSummary;
+    @Expose
+    @SerializedName("user_message")
+    private String userMessage;
 
-    /**
-     * @return The isDeleted
-     */
-    public Boolean isDeleted() {
-        return isDeleted;
+    public class Error {
+        @Expose
+        @SerializedName(".tag")
+        private String tag;
     }
 
-    /**
-     * @param isDeleted The is_deleted
-     */
-    public void setDeleted(Boolean isDeleted) {
-        this.isDeleted = isDeleted;
+    @Override
+    public String toString() {
+        return "ErrorResponse{" +
+                "error=" + error +
+                ", errorSummary='" + errorSummary + '\'' +
+                ", userMessage='" + userMessage + '\'' +
+                '}';
     }
 }

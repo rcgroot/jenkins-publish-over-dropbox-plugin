@@ -24,26 +24,14 @@
 
 package org.jenkinsci.plugins.publishoverdropbox.domain.model;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
-
-public class DeletedFile {
-
-    @SerializedName("is_deleted")
-    @Expose
-    private Boolean isDeleted;
-
-    /**
-     * @return The isDeleted
-     */
-    public Boolean isDeleted() {
-        return isDeleted;
+public class FolderMetadata extends Metadata {
+    @Override
+    public boolean isDir() {
+        return true;
     }
 
-    /**
-     * @param isDeleted The is_deleted
-     */
-    public void setDeleted(Boolean isDeleted) {
-        this.isDeleted = isDeleted;
+    @Override
+    public boolean isFile() {
+        return false;
     }
 }

@@ -24,33 +24,42 @@
 
 package org.jenkinsci.plugins.publishoverdropbox.domain.model;
 
+import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+public class FileMetadata extends Metadata {
 
-abstract public class BaseResponse {
+    @SerializedName("server_modified")
+    @Expose
+    private String serverModified;
 
-    @SerializedName("error_description")
-    private String errorDescription;
-    @SerializedName("error")
-    private String error;
+    @SerializedName("client_modified")
+    @Expose
+    private String clientModified;
 
-    public boolean hasError() {
-        return error != null || errorDescription != null;
+    public String getServerModified() {
+        return serverModified;
     }
 
-    public String getErrorDescription() {
-        return errorDescription;
+    public void setServerModified(String serverModified) {
+        this.serverModified = serverModified;
     }
 
-    public void setErrorDescription(String errorDescription) {
-        this.errorDescription = errorDescription;
+    public String getClientModified() {
+        return clientModified;
     }
 
-    public String getError() {
-        return error;
+    public void setClientModified(String clientModified) {
+        this.clientModified = clientModified;
     }
 
-    public void setError(String error) {
-        this.error = error;
+    @Override
+    public boolean isDir() {
+        return false;
+    }
+
+    @Override
+    public boolean isFile() {
+        return true;
     }
 }

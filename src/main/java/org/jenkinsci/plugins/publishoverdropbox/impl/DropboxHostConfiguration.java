@@ -37,8 +37,8 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 import org.jenkinsci.plugins.publishoverdropbox.DropboxToken;
 import org.jenkinsci.plugins.publishoverdropbox.descriptor.DropboxHostConfigurationDescriptor;
-import org.jenkinsci.plugins.publishoverdropbox.domain.Dropbox;
 import org.jenkinsci.plugins.publishoverdropbox.domain.DropboxClient;
+import org.jenkinsci.plugins.publishoverdropbox.domain.DropboxV2;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 import java.io.IOException;
@@ -87,8 +87,8 @@ public class DropboxHostConfiguration extends BPHostConfiguration<DropboxClient,
         return client;
     }
 
-    private Dropbox createDropbox() {
-        return new Dropbox(token.getAccessCode());
+    private DropboxV2 createDropbox() {
+        return new DropboxV2(token.getAccessCode());
     }
 
 

@@ -46,10 +46,10 @@ public class ErrorResponse {
 
     @Override
     public String toString() {
-        return "ErrorResponse{" +
-                "error=" + error +
-                ", errorSummary='" + errorSummary + '\'' +
-                ", userMessage='" + userMessage + '\'' +
+        return "caused by {" +
+                ((error != null) ? ("error = " + error.tag) : "") +
+                ((errorSummary != null) ? (", errorSummary = '" + errorSummary + '\'') : "") +
+                ((userMessage != null) ? (", userMessage = '" + userMessage + '\'') : ("")) +
                 '}';
     }
 }

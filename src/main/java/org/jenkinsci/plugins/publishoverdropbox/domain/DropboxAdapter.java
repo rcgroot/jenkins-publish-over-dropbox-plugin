@@ -7,15 +7,9 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public interface DropboxAdapter {
-    boolean changeWorkingDirectory(String path) throws RestException;
+    void setTimeout(int timeout);
 
-    FolderMetadata makeDirectory(String directory) throws RestException;
-
-    void cleanWorkingFolder() throws IOException;
-
-    void pruneFolder(String path, int pruneRootDays) throws RestException;
-
-    void storeFile(String name, InputStream content, long length) throws RestException;
+    int getTimeout();
 
     boolean isConnected();
 
@@ -23,7 +17,13 @@ public interface DropboxAdapter {
 
     boolean disconnect() throws IOException;
 
-    void setTimeout(int timeout);
+    FolderMetadata makeDirectory(String directory) throws RestException;
 
-    int getTimeout();
+    boolean changeWorkingDirectory(String path) throws RestException;
+
+    void storeFile(String name, InputStream content, long length) throws RestException;
+
+    void 2() throws IOException;
+
+    void pruneFolder(String path, int pruneRootDays) throws RestException;
 }

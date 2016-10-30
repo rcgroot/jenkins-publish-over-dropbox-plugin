@@ -26,6 +26,7 @@ package org.jenkinsci.plugins.publishoverdropbox.domain;
 
 import com.cloudbees.plugins.credentials.CredentialsProvider;
 import com.cloudbees.plugins.credentials.domains.DomainRequirement;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import jenkins.model.Jenkins;
@@ -49,6 +50,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+
+import static org.jenkinsci.plugins.publishoverdropbox.domain.JsonObjectRequest.Method.POST;
 
 
 public class DropboxV2 implements DropboxAdapter {
@@ -107,6 +110,7 @@ public class DropboxV2 implements DropboxAdapter {
 
     public boolean connect() throws IOException {
         userInfo = retrieveAccountInfo();
+
         return isConnected();
     }
 
@@ -121,7 +125,7 @@ public class DropboxV2 implements DropboxAdapter {
 
     private AccountInfo retrieveAccountInfo() throws RestException {
         URL url = getUrl(URL_ACCOUNT_INFO);
-        JsonObjectRequest<AccountInfo> request = buildRequest(url, AccountInfo.class);
+        JsonObjectRequest<AccountInfo> request = requestForPostUrlClassResponse(url, AccountInfo.class);
 
         return request.execute();
     }
@@ -143,20 +147,32 @@ public class DropboxV2 implements DropboxAdapter {
 
     public FolderMetadata makeDirectory(@Nonnull String relative) throws RestException {
         URL url = getUrl(URL_CREATE_FOLDER);
-        CreateFolderRequest requestContent = new CreateFolderRequest();
-        String absolute = createAbsolutePath(relative);
-        requestContent.setPath(absolute);
-        JsonObjectRequest<FolderMetadata> request = buildRequestWithContent(url, requestContent, FolderMetadata.class);
+        FolderMetadata folder = null;
 
-        final FolderMetadata folder;
         try {
-            folder = request.execute();
-        } catch (IOException e) {
-            throw new RestException(Messages.exception_dropbox_folder_create(relative), e);
+            Metadata metadata = retrieveMetaData(relative);
+            if (metadata.isDir()) {
+                folder = (FolderMetadata) metadata;
+            }
+        } catch (RestException re) {
+            folder = null;
+        }
+
+        if (folder == null) {
+            CreateFolderRequest requestContent = new CreateFolderRequest();
+            String absolute = createAbsolutePath(relative);
+            requestContent.setPath(absolute);
+            JsonObjectRequest<FolderMetadata> request = requestPostRequestResponse(url, requestContent, FolderMetadata.class);
+            try {
+                folder = request.execute();
+            } catch (IOException e) {
+                throw new RestException(Messages.exception_dropbox_folder_create(relative), e);
+            }
         }
 
         return folder;
     }
+
 
     public void cleanWorkingFolder() throws RestException {
         if (workingFolder.isDir()) {
@@ -185,7 +201,7 @@ public class DropboxV2 implements DropboxAdapter {
         final String path = file.getPathLower();
         requestContent.setPath(path);
         if (StringUtils.isNotEmpty(path) && !"/".equals(path)) {
-            JsonObjectRequest<Metadata> request = buildRequestWithContent(url, requestContent, Metadata.class);
+            JsonObjectRequest<Metadata> request = requestPostRequestResponse(url, requestContent, Metadata.class);
             request.execute();
         } else {
             throw new RestException(Messages.exception_dropbox_folder_delete(path));
@@ -248,13 +264,20 @@ public class DropboxV2 implements DropboxAdapter {
         URL url = getUrl(URL_UPLOAD);
         UploadRequest uploadRequest = new UploadRequest();
         uploadRequest.setPath(createPath(name));
-        JsonObjectRequest<FileMetadata> request = new JsonObjectRequest<FileMetadata>(url, content, "application/octet-stream", gson, FileMetadata.class);
-        request.setHeader("Dropbox-API-Arg", gson.toJson(uploadRequest));
-        request.setHeader("Content-Length", Long.toString(length));
-
+        JsonObjectRequest.Builder<FileMetadata> builder = new JsonObjectRequest.Builder<FileMetadata>();
+        builder.url(url)
+                .gson(gson)
+                .method(POST)
+                .upload(content, "application/octet-stream")
+                .addHeader("Dropbox-API-Arg", gson.toJson(uploadRequest))
+                .addHeader("Content-Length", Long.toString(length))
+                .responseClass(FileMetadata.class)
+                .responseErrorClass(ErrorResponse.class)
+                .sign(accessToken)
+                .timeout(timeout);
         final FileMetadata fileMetadata;
         try {
-            fileMetadata = request.execute();
+            fileMetadata = builder.build().execute();
         } catch (IOException e) {
             throw new RestException(Messages.exception_dropbox_file_upload_simple(name), e);
         }
@@ -266,12 +289,11 @@ public class DropboxV2 implements DropboxAdapter {
         //TODO
     }
 
-
     private FolderContent listFiles(@Nonnull FolderMetadata workingFolder) throws RestException {
         URL url = getUrl(URL_LIST_FOLDER);
         ListFolderRequest requestContent = new ListFolderRequest();
         requestContent.setPath(workingFolder.getPathLower());
-        JsonObjectRequest<FolderContent> request = buildRequestWithContent(url, requestContent, FolderContent.class);
+        JsonObjectRequest<FolderContent> request = requestPostRequestResponse(url, requestContent, FolderContent.class);
 
         final FolderContent content;
         try {
@@ -288,7 +310,7 @@ public class DropboxV2 implements DropboxAdapter {
 
         CursorRequest requestContent = new CursorRequest();
         requestContent.setCursor(cursor);
-        JsonObjectRequest<FolderContent> request = buildRequestWithContent(url, requestContent, FolderContent.class);
+        JsonObjectRequest<FolderContent> request = requestPostRequestResponse(url, requestContent, FolderContent.class);
 
         final FolderContent content;
         try {
@@ -300,12 +322,13 @@ public class DropboxV2 implements DropboxAdapter {
         return content;
     }
 
-    private Metadata retrieveMetaData(String relative) throws RestException {
+    @VisibleForTesting
+    Metadata retrieveMetaData(String relative) throws RestException {
         URL url = getUrl(URL_METADATA);
         MetadataRequest requestContent = new MetadataRequest();
         String absolute = createAbsolutePath(relative);
         requestContent.setPath(absolute);
-        JsonObjectRequest<Metadata> request = buildRequestWithContent(url, requestContent, Metadata.class);
+        JsonObjectRequest<Metadata> request = requestPostRequestResponse(url, requestContent, Metadata.class);
 
         final Metadata metadata;
         try {
@@ -317,27 +340,33 @@ public class DropboxV2 implements DropboxAdapter {
         return metadata;
     }
 
-    private <T> JsonObjectRequest<T> buildRequestWithContent(URL url, Object requestContent, Class<T> classOfT) {
-        String content = gson.toJson(requestContent);
-        JsonObjectRequest<T> request = new JsonObjectRequest<T>(url, content, APPLICATION_JSON, gson, classOfT);
-        request.setErrorClass(ErrorResponse.class);
-        if (timeout > 1000) {
-            request.setTimeout(timeout);
-        }
-        request.sign(accessToken);
 
-        return request;
+    private <T> JsonObjectRequest<T> requestForPostUrlClassResponse(URL url, Class<T> classOfT) {
+        JsonObjectRequest.Builder<T> builder = new JsonObjectRequest.Builder<T>();
+        builder.url(url)
+                .gson(gson)
+                .method(POST)
+                .responseClass(classOfT)
+                .responseErrorClass(ErrorResponse.class)
+                .sign(accessToken)
+                .timeout(timeout);
+
+        return builder.build();
     }
 
-    private <T> JsonObjectRequest<T> buildRequest(URL url, Class<T> classOfT) {
-        JsonObjectRequest<T> request = new JsonObjectRequest<T>(url, gson, classOfT);
-        request.setErrorClass(ErrorResponse.class);
-        if (timeout > 1000) {
-            request.setTimeout(timeout);
-        }
-        request.sign(accessToken);
+    private <T> JsonObjectRequest<T> requestPostRequestResponse(URL url, Object requestContent, Class<T> classOfT) {
+        String content = gson.toJson(requestContent);
+        JsonObjectRequest.Builder<T> builder = new JsonObjectRequest.Builder<T>();
+        builder.url(url)
+                .gson(gson)
+                .method(POST)
+                .upload(content, APPLICATION_JSON)
+                .responseClass(classOfT)
+                .responseErrorClass(ErrorResponse.class)
+                .sign(accessToken)
+                .timeout(timeout);
 
-        return request;
+        return builder.build();
     }
 
     private static URL getUrl(String urlSource) throws RestException {
@@ -402,25 +431,26 @@ public class DropboxV2 implements DropboxAdapter {
     private static String readAccessTokenFromWeb(String authorizationCode) throws RestException, UnsupportedEncodingException {
         String accessToken;
         URL url = getUrl(URL_TOKEN);
-        FormBuilder builder = new FormBuilder()
+        FormBuilder formBuilder = new FormBuilder()
                 .appendQueryParameter("code", authorizationCode)
                 .appendQueryParameter("grant_type", VALUE_AUTHORIZATION_CODE)
                 .appendQueryParameter("client_id", Config.CLIENT_ID);
         try {
             // Apply production config not included in source distribution
             Class privateConfig = Class.forName("org.jenkinsci.plugins.publishoverdropbox.domain.ConfigPrivate");
-            Class[] argClass = {builder.getClass()};
+            Class[] argClass = {formBuilder.getClass()};
             Method method = privateConfig.getDeclaredMethod("append", argClass);
-            method.invoke(null, builder);
+            method.invoke(null, formBuilder);
         } catch (Exception e) {
             // Apply local development parameters
-            builder.appendQueryParameter("client_secret", Config.CLIENT_SECRET);
+            formBuilder.appendQueryParameter("client_secret", Config.CLIENT_SECRET);
         }
-        String body = builder.build();
-
-        String contentType = FormBuilder.CONTENT_TYPE;
-        JsonObjectRequest<TokenResponse> request = new JsonObjectRequest<TokenResponse>(url, body, contentType, new Gson(), TokenResponse.class);
-        request.setErrorClass(ErrorResponse.class);
+        JsonObjectRequest<TokenResponse> request = new JsonObjectRequest.Builder<TokenResponse>()
+                .gson(new Gson())
+                .url(url)
+                .upload(formBuilder.build(), FormBuilder.CONTENT_TYPE)
+                .responseErrorClass(ErrorResponse.class)
+                .build();
         TokenResponse response = request.execute();
         accessToken = response.getAccessToken();
 

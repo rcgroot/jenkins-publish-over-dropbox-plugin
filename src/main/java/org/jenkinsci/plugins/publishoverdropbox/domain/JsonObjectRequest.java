@@ -47,110 +47,152 @@ public class JsonObjectRequest<T> {
     private static final String VALUE_BEARER = "Bearer ";
     private static final int TIMEOUT_30_SECONDS = 30000;
 
-    private final URL url;
+    private URL url;
     private InputStream bodyStream;
     private String contentType;
-    private final Gson gson;
-    private final Class<T> classOfT;
+    private Gson gson;
+    private Class<T> classOfT;
     private String bearerToken;
     private int timeout = TIMEOUT_30_SECONDS;
     private Map<String, String> headers = new HashMap<String, String>();
     private Class classOfError;
+    private Method method = Method.GET;
 
-    public JsonObjectRequest(URL url, Gson gson, Class<T> classOfT) {
-        this.url = url;
-        this.gson = gson;
-        this.classOfT = classOfT;
-        this.contentType = null;
-    }
+    enum Method {POST, GET, PUT, DELETE}
 
-    public JsonObjectRequest(URL url, InputStream content, String contentType, Gson gson, Class<T> classOfT) {
-        this(url, gson, classOfT);
-        this.contentType = contentType;
-        this.bodyStream = content;
-    }
+    public static class Builder<T> {
+        JsonObjectRequest<T> request;
 
-    public JsonObjectRequest(URL url, String content, String contentType, Gson gson, Class<T> classOfT) {
-        this(url, gson, classOfT);
-        this.contentType = contentType;
-        try {
-            bodyStream = new ByteArrayInputStream(content.getBytes(UTF_8));
-        } catch (UnsupportedEncodingException e) {
-            // Ignored
+        public Builder() {
+            request = new JsonObjectRequest();
+        }
+
+        public Builder<T> url(URL url) {
+            request.url = url;
+            return this;
+        }
+
+        public Builder<T> gson(Gson gson) {
+            request.gson = gson;
+            return this;
+        }
+
+        public Builder<T> responseClass(Class<T> classOfT) {
+            request.classOfT = classOfT;
+            return this;
+        }
+
+        public Builder<T> responseErrorClass(Class classOfError) {
+            request.classOfError = classOfError;
+            return this;
+        }
+
+        public Builder<T> upload(InputStream content, String contentType) {
+            request.contentType = contentType;
+            request.bodyStream = content;
+            return this;
+        }
+
+        public Builder<T> upload(String content, String contentType) {
+            request.contentType = contentType;
+            try {
+                request.bodyStream = new ByteArrayInputStream(content.getBytes(UTF_8));
+            } catch (UnsupportedEncodingException e) {
+                // Ignored
+            }
+            return this;
+        }
+
+        public Builder<T> addHeader(@Nonnull String key, @Nonnull String value) {
+            request.headers.put(key, value);
+            return this;
+        }
+
+        public Builder<T> method(Method method) {
+            request.method = method;
+            return this;
+        }
+
+        public Builder<T> sign(String accessCode) {
+            request.bearerToken = accessCode;
+            return this;
+        }
+
+        public Builder<T> timeout(int timeout) {
+            if (timeout > 1000) {
+                request.timeout = timeout;
+            } else {
+                request.timeout = TIMEOUT_30_SECONDS;
+            }
+            return this;
+        }
+
+        public JsonObjectRequest<T> build() {
+            return request;
         }
     }
 
-    public void setHeader(@Nonnull String key, @Nonnull String value) {
-        headers.put(key, value);
-    }
-
-    public void setErrorClass(Class classOfError) {
-        this.classOfError = classOfError;
+    private JsonObjectRequest() {
     }
 
     public T execute() throws RestException {
-        T model;
+        T model = null;
         HttpURLConnection connection;
         InputStream inputStream = null;
         InputStream errorStream = null;
         try {
+            // Prepare
             connection = (HttpURLConnection) url.openConnection();
             connection.setReadTimeout(timeout);
             connection.setConnectTimeout(timeout);
             for (String key : headers.keySet()) {
                 connection.addRequestProperty(key, headers.get(key));
             }
-
             if (bearerToken != null) {
                 signWithBearerToken(connection);
             }
+            connection.setRequestMethod(method.name());
+            connection.setDoOutput(false);
+            boolean responseBody = method == Method.GET || method == Method.POST;
+            connection.setDoInput(responseBody);
 
+            // Upload
             if (bodyStream != null) {
-                upload(connection, METHOD_POST);
-            } else {
-                download(connection);
+                connection.setDoOutput(true);
+                upload(connection);
             }
 
+            // Response
             int responseCode = connection.getResponseCode();
             String responseMessage = connection.getResponseMessage();
             if (responseCode < 200 || responseCode > 299) {
                 errorStream = connection.getErrorStream();
-                String responseBody;
+                Object errorResponse;
                 if (classOfError != null) {
-                    Object errorResponse = readModel(gson, errorStream, classOfError);
-                    responseBody = errorResponse.toString();
+                    errorResponse = readModel(gson, errorStream, classOfError);
                 } else {
-                    responseBody = IOUtils.toString(errorStream);
+                    errorResponse = IOUtils.toString(errorStream);
                 }
-                throw new RestException(Messages.exception_rest_http(responseCode, responseMessage, responseBody));
+                throw new RestException(Messages.exception_rest_http(responseCode, responseMessage), errorResponse);
             }
-            inputStream = connection.getInputStream();
-            model = readModel(gson, inputStream, classOfT);
+
+            // Download
+            if (responseBody) {
+                inputStream = connection.getInputStream();
+                model = readModel(gson, inputStream, classOfT);
+            }
+
         } catch (IOException e) {
             throw new RestException(Messages.exception_rest_connection(), e);
         } finally {
             closeQuietly(errorStream);
             closeQuietly(inputStream);
         }
-        if (model == null) {
-            throw new RestException(Messages.exception_rest_model());
-        }
 
         return model;
     }
 
-    private void signWithBearerToken(HttpURLConnection connection) {
-        connection.setRequestProperty(PARAM_AUTHORIZATION, VALUE_BEARER + bearerToken);
-    }
-
-    private void download(HttpURLConnection connection) throws IOException {
-        connection.setRequestMethod(METHOD_GET);
-        connection.setDoOutput(false);
-    }
-
-    private void upload(HttpURLConnection connection, String method) throws IOException {
-        connection.setRequestMethod(method);
-        connection.setDoOutput(true);
+    private void upload(HttpURLConnection connection) throws IOException {
         if (contentType != null) {
             connection.addRequestProperty(HEADER_CONTENT_TYPE, contentType);
         } else {
@@ -167,6 +209,10 @@ public class JsonObjectRequest<T> {
             closeQuietly(bodyStream);
             closeQuietly(outputStream);
         }
+    }
+
+    private void signWithBearerToken(HttpURLConnection connection) {
+        connection.setRequestProperty(PARAM_AUTHORIZATION, VALUE_BEARER + bearerToken);
     }
 
     private static <MODEL> MODEL readModel(Gson gson, InputStream inputStream, Class<MODEL> classOfModel) throws IOException {
@@ -192,13 +238,4 @@ public class JsonObjectRequest<T> {
             }
         }
     }
-
-    public void sign(String accessCode) {
-        this.bearerToken = accessCode;
-    }
-
-    public void setTimeout(int timeout) {
-        this.timeout = timeout;
-    }
-
 }

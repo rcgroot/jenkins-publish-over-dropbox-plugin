@@ -45,6 +45,8 @@ public abstract class Metadata {
     @Expose
     @SerializedName("path_lower")
     private String pathLower;
+    @Expose
+    private long size;
 
     public String getTag() {
         return tag;
@@ -67,4 +69,7 @@ public abstract class Metadata {
         return pathLower;
     }
 
+    public long getSize() {
+        return size;
+    }
 }

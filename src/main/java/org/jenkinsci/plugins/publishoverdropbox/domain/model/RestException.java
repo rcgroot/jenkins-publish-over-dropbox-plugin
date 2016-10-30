@@ -27,19 +27,30 @@ package org.jenkinsci.plugins.publishoverdropbox.domain.model;
 import java.io.IOException;
 
 public class RestException extends IOException {
+    private final Object response;
+
     public RestException() {
         super();
+        response = null;
     }
 
     public RestException(String message) {
         super(message);
+        response = null;
+    }
+
+    public RestException(String message, Object response) {
+        super(message);
+        this.response = response;
     }
 
     public RestException(Throwable cause) {
         super(cause);
+        response = null;
     }
 
     public RestException(String message, Throwable cause) {
         super(message, cause);
+        response = null;
     }
 }

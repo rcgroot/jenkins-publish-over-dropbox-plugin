@@ -23,7 +23,7 @@ public interface DropboxAdapter {
 
     void storeFile(String name, InputStream content, long length) throws RestException;
 
-    void 2() throws IOException;
+    void cleanWorkingFolder() throws IOException;
 
     void pruneFolder(String path, int pruneRootDays) throws RestException;
 }

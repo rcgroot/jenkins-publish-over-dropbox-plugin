@@ -71,22 +71,28 @@ public class DropboxV2 implements DropboxAdapter {
     private static final String VALUE_AUTHORIZATION_CODE = "authorization_code";
     private static final long MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
     private static final long FOUR_MEGA_BYTE = 4 * 1024;
-
     private static final String APPLICATION_JSON = "application/json";
-    private AccountInfo userInfo;
+    private static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
+
+    @VisibleForTesting
+    long chunkSize = FOUR_MEGA_BYTE;
     private int timeout = -1;
     private final String accessToken;
-    public final Gson gson;
-
+    private final Gson gson;
+    private AccountInfo userInfo;
     private FolderMetadata workingFolder;
 
     public DropboxV2(String accessToken) {
         this.accessToken = accessToken;
+        this.gson = createGson();
+    }
+
+    public static Gson createGson() {
         RuntimeTypeAdapterFactory<Metadata> metadataAdapterFactory = RuntimeTypeAdapterFactory
                 .of(Metadata.class, ".tag")
                 .registerSubtype(FolderMetadata.class, "folder")
                 .registerSubtype(FileMetadata.class, "file");
-        this.gson = new GsonBuilder()
+        return new GsonBuilder()
                 .registerTypeAdapterFactory(metadataAdapterFactory)
                 .create();
     }
@@ -145,12 +151,13 @@ public class DropboxV2 implements DropboxAdapter {
         return hasSuccess && workingFolder != null && workingFolder.isDir();
     }
 
-    public FolderMetadata makeDirectory(@Nonnull String relative) throws RestException {
+    public FolderMetadata makeDirectory(@Nonnull String path) throws RestException {
         URL url = getUrl(URL_CREATE_FOLDER);
         FolderMetadata folder = null;
+        String absolute = createAbsolutePath(path);
 
         try {
-            Metadata metadata = retrieveMetaData(relative);
+            Metadata metadata = retrieveMetaData(absolute);
             if (metadata.isDir()) {
                 folder = (FolderMetadata) metadata;
             }
@@ -160,13 +167,12 @@ public class DropboxV2 implements DropboxAdapter {
 
         if (folder == null) {
             CreateFolderRequest requestContent = new CreateFolderRequest();
-            String absolute = createAbsolutePath(relative);
             requestContent.setPath(absolute);
             JsonObjectRequest<FolderMetadata> request = requestPostRequestResponse(url, requestContent, FolderMetadata.class);
             try {
                 folder = request.execute();
             } catch (IOException e) {
-                throw new RestException(Messages.exception_dropbox_folder_create(relative), e);
+                throw new RestException(Messages.exception_dropbox_folder_create(path), e);
             }
         }
 
@@ -249,7 +255,7 @@ public class DropboxV2 implements DropboxAdapter {
      * @param length  content size in bytes
      */
     public void storeFile(@Nonnull String name, @Nonnull InputStream content, long length) throws RestException {
-        if (length < FOUR_MEGA_BYTE) {
+        if (length <= chunkSize) {
             singleStore(name, content, length);
         } else {
             chunkedStore(name, content, length);
@@ -264,20 +270,10 @@ public class DropboxV2 implements DropboxAdapter {
         URL url = getUrl(URL_UPLOAD);
         UploadRequest uploadRequest = new UploadRequest();
         uploadRequest.setPath(createPath(name));
-        JsonObjectRequest.Builder<FileMetadata> builder = new JsonObjectRequest.Builder<FileMetadata>();
-        builder.url(url)
-                .gson(gson)
-                .method(POST)
-                .upload(content, "application/octet-stream")
-                .addHeader("Dropbox-API-Arg", gson.toJson(uploadRequest))
-                .addHeader("Content-Length", Long.toString(length))
-                .responseClass(FileMetadata.class)
-                .responseErrorClass(ErrorResponse.class)
-                .sign(accessToken)
-                .timeout(timeout);
+        JsonObjectRequest<FileMetadata> request = requestForUpload(url, uploadRequest, FileMetadata.class, content, length);
         final FileMetadata fileMetadata;
         try {
-            fileMetadata = builder.build().execute();
+            fileMetadata = request.execute();
         } catch (IOException e) {
             throw new RestException(Messages.exception_dropbox_file_upload_simple(name), e);
         }
@@ -285,11 +281,40 @@ public class DropboxV2 implements DropboxAdapter {
         return fileMetadata;
     }
 
-    private void chunkedStore(String name, InputStream content, long length) {
-        //TODO
+    private void chunkedStore(String name, InputStream content, long length) throws RestException {
+        // Start session
+        InputStream chunkStream;
+        long offSet = 0;
+        URL startUrl = getUrl(URL_UPLOAD_START);
+        chunkStream = new ChunkedInputStream(content, chunkSize);
+        SessionStart startContent = new SessionStart();
+        JsonObjectRequest<Session> startRequest = requestForUpload(startUrl, startContent, Session.class, chunkStream, chunkSize);
+        Session session = startRequest.execute();
+        offSet += chunkSize;
+
+        while (length - offSet > chunkSize) {
+            // Add chunk to session
+            URL appendUrl = getUrl(URL_UPLOAD_APPEND);
+            chunkStream = new ChunkedInputStream(content, chunkSize);
+            SessionAppend appendContent = new SessionAppend();
+            appendContent.cursor.setOffset(offSet);
+            appendContent.cursor.setSessionId(session.getSessionId());
+            JsonObjectRequest<ErrorResponse> appendRequest = requestForUpload(appendUrl, appendContent, ErrorResponse.class, chunkStream, chunkSize);
+            appendRequest.execute();
+            offSet += chunkSize;
+        }
+        // Commit uploader
+        URL finishUrl = getUrl(URL_UPLOAD_FINISH);
+        chunkStream = new ChunkedInputStream(content, chunkSize);
+        SessionFinish finishContent = new SessionFinish();
+        finishContent.cursor.setSessionId(session.getSessionId());
+        finishContent.cursor.setOffset(offSet);
+        finishContent.commit.setPath(createPath(name));
+        JsonObjectRequest<FileMetadata> finishRequest = requestForUpload(finishUrl, finishContent, FileMetadata.class, chunkStream, length - offSet);
+        finishRequest.execute();
     }
 
-    private FolderContent listFiles(@Nonnull FolderMetadata workingFolder) throws RestException {
+    FolderContent listFiles(@Nonnull FolderMetadata workingFolder) throws RestException {
         URL url = getUrl(URL_LIST_FOLDER);
         ListFolderRequest requestContent = new ListFolderRequest();
         requestContent.setPath(workingFolder.getPathLower());
@@ -340,7 +365,6 @@ public class DropboxV2 implements DropboxAdapter {
         return metadata;
     }
 
-
     private <T> JsonObjectRequest<T> requestForPostUrlClassResponse(URL url, Class<T> classOfT) {
         JsonObjectRequest.Builder<T> builder = new JsonObjectRequest.Builder<T>();
         builder.url(url)
@@ -362,6 +386,22 @@ public class DropboxV2 implements DropboxAdapter {
                 .method(POST)
                 .upload(content, APPLICATION_JSON)
                 .responseClass(classOfT)
+                .responseErrorClass(ErrorResponse.class)
+                .sign(accessToken)
+                .timeout(timeout);
+
+        return builder.build();
+    }
+
+    private <T> JsonObjectRequest<T> requestForUpload(URL url, Object requestContent, Class<T> responseClass, @Nonnull InputStream content, long length) {
+        JsonObjectRequest.Builder<T> builder = new JsonObjectRequest.Builder<T>()
+                .url(url)
+                .gson(gson)
+                .method(POST)
+                .upload(content, APPLICATION_OCTET_STREAM)
+                .addHeader("Dropbox-API-Arg", gson.toJson(requestContent))
+                .addHeader("Content-Length", Long.toString(length))
+                .responseClass(responseClass)
                 .responseErrorClass(ErrorResponse.class)
                 .sign(accessToken)
                 .timeout(timeout);

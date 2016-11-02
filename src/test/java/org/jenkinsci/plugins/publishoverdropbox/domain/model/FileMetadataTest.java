@@ -45,7 +45,7 @@ public class FileMetadataTest {
 
     @Before
     public void setUp() {
-        gson = new DropboxV2("fake").gson;
+        gson = DropboxV2.createGson();
     }
 
     @Test

@@ -40,8 +40,6 @@ public class JsonObjectRequest<T> {
 
     private static final String HEADER_CONTENT_TYPE = "Content-Type";
     private static final String UTF_8 = "UTF-8";
-    private static final String METHOD_POST = "POST";
-    private static final String METHOD_GET = "GET";
     private static final String OCTET_STREAM = "application/octet-stream";
     private static final String PARAM_AUTHORIZATION = "Authorization";
     private static final String VALUE_BEARER = "Bearer ";

@@ -77,9 +77,9 @@ public class FolderContentTest {
 
     @Before
     public void setUp() {
-        gson = new DropboxV2("fake").gson;
+        gson = DropboxV2.createGson();
     }
-    
+
     @Test
     public void testExampleJson() {
         // Arrange

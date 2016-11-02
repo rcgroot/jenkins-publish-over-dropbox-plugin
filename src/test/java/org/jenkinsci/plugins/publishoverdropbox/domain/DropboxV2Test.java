@@ -1,6 +1,7 @@
 package org.jenkinsci.plugins.publishoverdropbox.domain;
 
 import org.apache.commons.lang.StringUtils;
+import org.jenkinsci.plugins.publishoverdropbox.domain.model.FolderContent;
 import org.jenkinsci.plugins.publishoverdropbox.domain.model.FolderMetadata;
 import org.jenkinsci.plugins.publishoverdropbox.domain.model.Metadata;
 import org.jenkinsci.plugins.publishoverdropbox.domain.model.RestException;
@@ -22,7 +23,7 @@ import static org.junit.Assume.assumeTrue;
  */
 public class DropboxV2Test {
 
-    private final static String accessToken = "ZPlLplRir6wAAAAAAAACVOBl6XfLjwDyYSqZJ9CEqeoBCM7gSRJyHGijhBYdJOmu";
+    private final static String accessToken = "";
     private DropboxV2 sut;
 
     @Before
@@ -37,6 +38,9 @@ public class DropboxV2Test {
 
     @After
     public void tearDown() throws RestException {
+        if (sut == null) {
+            return;
+        }
         boolean exists = sut.changeWorkingDirectory("/tests");
         if (exists) {
             sut.delete(sut.getWorkingFolder());
@@ -126,6 +130,66 @@ public class DropboxV2Test {
         Metadata metaData = sut.retrieveMetaData("/tests/simplefile.txt");
         assertThat(metaData.getName(), is("simplefile.txt"));
         assertThat(metaData.getPathLower(), is("/tests/simplefile.txt"));
+        assertThat(metaData.getSize(), is((long) bytes.length));
+    }
+
+    @Test
+    public void testCleanWorkingFolder() throws RestException, UnsupportedEncodingException {
+        // Arrange
+        sut.makeDirectory("tests");
+        sut.changeWorkingDirectory("tests");
+        final byte[] bytes = "Hello world".getBytes("UTF-8");
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+        sut.storeFile("simplefile.txt", inputStream, bytes.length);
+        // Act
+        sut.cleanWorkingFolder();
+        // Assert
+        FolderMetadata metaData = (FolderMetadata) sut.retrieveMetaData("/tests");
+        assertThat(metaData.getName(), is("tests"));
+        FolderContent contents = sut.listFiles(metaData);
+        assertThat(contents.getEntries().size(), is(0));
+    }
+
+    @Test
+    public void testUploadTwoChunks() throws RestException, UnsupportedEncodingException {
+        // Arrange
+        sut.makeDirectory("tests");
+        sut.changeWorkingDirectory("tests");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 100; i++) {
+            sb.append("Hello world");
+        }
+        final byte[] bytes = sb.toString().getBytes("UTF-8");
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+        sut.chunkSize = (bytes.length / 2) + 1;
+        // Act
+        sut.storeFile("2chunks-file.txt", inputStream, bytes.length);
+        // Assert
+        Metadata metaData = sut.retrieveMetaData("/tests/2chunks-file.txt");
+        assertThat(metaData.getName(), is("2chunks-file.txt"));
+        assertThat(metaData.getPathLower(), is("/tests/2chunks-file.txt"));
+        assertThat(metaData.getSize(), is((long) bytes.length));
+    }
+
+
+    @Test
+    public void testUploadFourChunks() throws RestException, UnsupportedEncodingException {
+        // Arrange
+        sut.makeDirectory("tests");
+        sut.changeWorkingDirectory("tests");
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 100; i++) {
+            sb.append("Hello world");
+        }
+        final byte[] bytes = sb.toString().getBytes("UTF-8");
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+        sut.chunkSize = (bytes.length / 3) - 10;
+        // Act
+        sut.storeFile("2chunks-file.txt", inputStream, bytes.length);
+        // Assert
+        Metadata metaData = sut.retrieveMetaData("/tests/2chunks-file.txt");
+        assertThat(metaData.getName(), is("2chunks-file.txt"));
+        assertThat(metaData.getPathLower(), is("/tests/2chunks-file.txt"));
         assertThat(metaData.getSize(), is((long) bytes.length));
     }
 }

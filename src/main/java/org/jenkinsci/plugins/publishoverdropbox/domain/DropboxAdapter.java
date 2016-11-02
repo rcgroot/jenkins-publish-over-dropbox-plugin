@@ -17,13 +17,13 @@ public interface DropboxAdapter {
 
     boolean disconnect() throws IOException;
 
-    FolderMetadata makeDirectory(String directory) throws RestException;
+    FolderMetadata makeDirectory(String path) throws RestException;
 
     boolean changeWorkingDirectory(String path) throws RestException;
 
     void storeFile(String name, InputStream content, long length) throws RestException;
 
-    void cleanWorkingFolder() throws IOException;
+    void cleanWorkingFolder() throws RestException;
 
     void pruneFolder(String path, int pruneRootDays) throws RestException;
 }

@@ -66,12 +66,12 @@ public class DropboxClient extends BPDefaultClient<DropboxTransfer> {
         }
     }
 
-    public boolean makeDirectory(final String directory) {
+    public boolean makeDirectory(final String path) {
         try {
-            FolderMetadata folder = dropbox.makeDirectory(directory);
+            FolderMetadata folder = dropbox.makeDirectory(path);
             return folder != null;
         } catch (IOException ioe) {
-            throw new BapPublisherException(Messages.exception_mkdirException(directory), ioe);
+            throw new BapPublisherException(Messages.exception_mkdirException(path), ioe);
         }
     }
 

@@ -25,6 +25,7 @@
 package org.jenkinsci.plugins.publishoverdropbox.domain;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import org.apache.commons.io.IOUtils;
 import org.jenkinsci.plugins.publishoverdropbox.domain.model.RestException;
 import org.jenkinsci.plugins.publishoverdropbox.impl.Messages;
@@ -167,11 +168,15 @@ public class JsonObjectRequest<T> {
                 errorStream = connection.getErrorStream();
                 Object errorResponse;
                 if (classOfError != null) {
-                    errorResponse = readModel(gson, errorStream, classOfError);
+                    errorResponse = IOUtils.toString(errorStream);
+                    try {
+                        errorResponse = readModel(gson, (String) errorResponse, classOfError);
+                    } catch (JsonSyntaxException exception) {
+                    }
                 } else {
                     errorResponse = IOUtils.toString(errorStream);
                 }
-                throw new RestException(Messages.exception_rest_http(responseCode, responseMessage), errorResponse);
+                throw new RestException(errorResponse.toString(), new IOException(Messages.exception_rest_http(responseCode, responseMessage)));
             }
 
             // Download
@@ -215,7 +220,7 @@ public class JsonObjectRequest<T> {
 
     private static <MODEL> MODEL readModel(Gson gson, InputStream inputStream, Class<MODEL> classOfModel) throws IOException {
         MODEL model = null;
-        if (inputStream != null) {
+        if (inputStream != null && classOfModel != null) {
             InputStreamReader reader = null;
             try {
                 reader = new InputStreamReader(inputStream);
@@ -223,6 +228,14 @@ public class JsonObjectRequest<T> {
             } finally {
                 closeQuietly(reader);
             }
+        }
+        return model;
+    }
+
+    private static <MODEL> MODEL readModel(Gson gson, String jsonData, Class<MODEL> classOfModel) throws IOException {
+        MODEL model = null;
+        if (jsonData != null) {
+            model = gson.fromJson(jsonData, classOfModel);
         }
         return model;
     }

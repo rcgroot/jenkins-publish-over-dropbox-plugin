@@ -70,7 +70,7 @@ public class DropboxV2 implements DropboxAdapter {
     private static final String PATH_SEPARATOR = "/";
     private static final String VALUE_AUTHORIZATION_CODE = "authorization_code";
     private static final long MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
-    private static final long FOUR_MEGA_BYTE = 4 * 1024;
+    private static final long FOUR_MEGA_BYTE = 4 * 1024 * 1024;
     private static final String APPLICATION_JSON = "application/json";
     private static final String APPLICATION_OCTET_STREAM = "application/octet-stream";
 
@@ -214,10 +214,10 @@ public class DropboxV2 implements DropboxAdapter {
         }
     }
 
-    public void pruneFolder(@Nonnull String folderPath, int pruneRootDays) throws RestException {
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US);
+    public void pruneFolder(@Nonnull String path, int pruneRootDays) throws RestException {
         Date cutoff = new Date(System.currentTimeMillis() - pruneRootDays * MILLISECONDS_PER_DAY);
-        Metadata metadata = retrieveMetaData(folderPath);
+        String absolute = createAbsolutePath(path);
+        Metadata metadata = retrieveMetaData(absolute);
         if (metadata.isDir() && metadata instanceof FolderMetadata) {
             FolderMetadata folderMetadata = (FolderMetadata) metadata;
             FolderContent contents = listFiles(folderMetadata);
@@ -229,11 +229,10 @@ public class DropboxV2 implements DropboxAdapter {
                 for (Metadata entry : contents.getEntries()) {
                     if (entry.isFile() && entry instanceof FileMetadata) {
                         FileMetadata fileMetadata = (FileMetadata) entry;
-                        String serverModified = "";
+                        String serverModified = fileMetadata.getServerModified();
                         Date lastModified;
                         try {
-                            serverModified = fileMetadata.getServerModified();
-                            lastModified = df.parse(serverModified);
+                            lastModified = parseDate(serverModified);
                         } catch (ParseException e) {
                             throw new RestException(Messages.exception_dropbox_folder_prunedate(serverModified), e);
                         }
@@ -247,6 +246,13 @@ public class DropboxV2 implements DropboxAdapter {
                 }
             } while (contents.hasMore());
         }
+    }
+
+    @VisibleForTesting
+    Date parseDate(String serverModified) throws ParseException {
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+
+        return df.parse(serverModified);
     }
 
     /**
@@ -487,6 +493,7 @@ public class DropboxV2 implements DropboxAdapter {
         }
         JsonObjectRequest<TokenResponse> request = new JsonObjectRequest.Builder<TokenResponse>()
                 .gson(new Gson())
+                .responseClass(TokenResponse.class)
                 .url(url)
                 .upload(formBuilder.build(), FormBuilder.CONTENT_TYPE)
                 .responseErrorClass(ErrorResponse.class)

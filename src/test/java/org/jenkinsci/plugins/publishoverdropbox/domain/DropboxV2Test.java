@@ -5,6 +5,7 @@ import org.jenkinsci.plugins.publishoverdropbox.domain.model.FolderContent;
 import org.jenkinsci.plugins.publishoverdropbox.domain.model.FolderMetadata;
 import org.jenkinsci.plugins.publishoverdropbox.domain.model.Metadata;
 import org.jenkinsci.plugins.publishoverdropbox.domain.model.RestException;
+import org.jfree.util.Log;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -12,6 +13,9 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.text.ParseException;
+import java.util.Calendar;
+import java.util.Date;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -24,6 +28,7 @@ import static org.junit.Assume.assumeTrue;
 public class DropboxV2Test {
 
     private final static String accessToken = "";
+    private final static String wrongAccessToken = "wrong";
     private DropboxV2 sut;
 
     @Before
@@ -41,9 +46,13 @@ public class DropboxV2Test {
         if (sut == null) {
             return;
         }
-        boolean exists = sut.changeWorkingDirectory("/tests");
-        if (exists) {
-            sut.delete(sut.getWorkingFolder());
+        try {
+            boolean exists = sut.changeWorkingDirectory("/tests");
+            if (exists) {
+                sut.delete(sut.getWorkingFolder());
+            }
+        } catch (Exception e) {
+            Log.debug("Teardown failed", e);
         }
     }
 
@@ -192,4 +201,45 @@ public class DropboxV2Test {
         assertThat(metaData.getPathLower(), is("/tests/2chunks-file.txt"));
         assertThat(metaData.getSize(), is((long) bytes.length));
     }
+
+
+    @Test
+    public void testPruneFolderLeavesFiles() throws RestException, UnsupportedEncodingException {
+        // Arrange
+        sut.makeDirectory("tests");
+        sut.changeWorkingDirectory("tests");
+        final byte[] bytes = "Hello wo§rld".getBytes("UTF-8");
+        ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
+        sut.storeFile("simplefile.txt", inputStream, bytes.length);
+        // Act
+        sut.pruneFolder("/tests", 1);
+        // Assert
+        FolderMetadata metaData = (FolderMetadata) sut.retrieveMetaData("/tests");
+        assertThat(metaData.getName(), is("tests"));
+        FolderContent contents = sut.listFiles(metaData);
+        assertThat(contents.getEntries().size(), is(1));
+    }
+
+    @Test
+    public void testDateParsing() throws ParseException {
+        // Act
+        Date date = sut.parseDate("2016-11-04T07:42:22Z");
+        // Assert
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(date);
+        assertThat(cal.get(Calendar.YEAR), is(2016));
+        assertThat(cal.get(Calendar.HOUR), is(7));
+        assertThat(cal.get(Calendar.SECOND), is(22));
+    }
+
+    @Test(expected = RestException.class)
+    public void testCantConnectWithWrongToken() throws IOException {
+        // Arrange
+        sut = new DropboxV2(wrongAccessToken);
+        // Act
+        sut.connect();
+        // Assert
+        assertThat(sut.isConnected(), is(false));
+    }
+
 }

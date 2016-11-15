@@ -13,7 +13,6 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.text.ParseException;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -155,7 +154,7 @@ public class DropboxV2Test {
         // Assert
         FolderMetadata metaData = (FolderMetadata) sut.retrieveMetaData("/tests");
         assertThat(metaData.getName(), is("tests"));
-        FolderContent contents = sut.listFiles(metaData);
+        FolderContent contents = sut.listFilesOfFolder(metaData);
         assertThat(contents.getEntries().size(), is(0));
     }
 
@@ -216,12 +215,12 @@ public class DropboxV2Test {
         // Assert
         FolderMetadata metaData = (FolderMetadata) sut.retrieveMetaData("/tests");
         assertThat(metaData.getName(), is("tests"));
-        FolderContent contents = sut.listFiles(metaData);
+        FolderContent contents = sut.listFilesOfFolder(metaData);
         assertThat(contents.getEntries().size(), is(1));
     }
 
     @Test
-    public void testDateParsing() throws ParseException {
+    public void testDateParsing() throws RestException {
         // Act
         Date date = sut.parseDate("2016-11-04T07:42:22Z");
         // Assert

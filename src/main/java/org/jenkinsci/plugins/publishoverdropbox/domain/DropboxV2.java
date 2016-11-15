@@ -60,7 +60,7 @@ public class DropboxV2 implements DropboxAdapter {
     private static final String URL_METADATA = "https://api.dropboxapi.com/2/files/get_metadata";
     private static final String URL_LIST_FOLDER = "https://api.dropboxapi.com/2/files/list_folder";
     private static final String URL_LIST_FOLDER_CONTINUE = "https://api.dropboxapi.com/2/files/list_folder/continue";
-    private static final String URL_OPS_DELETE_FILE = "https://api.dropboxapi.com/2/files/delete";
+    private static final String URL_OPS_DELETE = "https://api.dropboxapi.com/2/files/delete";
     private static final String URL_CREATE_FOLDER = "https://api.dropboxapi.com/2/files/create_folder";
 
     private static final String URL_UPLOAD = "https://content.dropboxapi.com/2/files/upload";
@@ -182,11 +182,11 @@ public class DropboxV2 implements DropboxAdapter {
 
     public void cleanWorkingFolder() throws RestException {
         if (workingFolder.isDir()) {
-            FolderContent contents = listFiles(workingFolder);
+            FolderContent contents = listFilesOfFolder(workingFolder);
             String cursor = null;
             do {
                 if (cursor != null) {
-                    contents = listFiles(cursor);
+                    contents = listFilesForCursor(cursor);
                 }
                 for (Metadata entry : contents.getEntries()) {
                     delete(entry);
@@ -194,18 +194,23 @@ public class DropboxV2 implements DropboxAdapter {
                 if (contents.hasMore()) {
                     cursor = contents.getCursor();
                 }
-            } while (contents.hasMore());
+            } while (contents.hasMore() && cursor != null);
 
         } else {
             throw new RestException(Messages.exception_dropbox_folder_delete(workingFolder.getName()));
         }
     }
 
-    void delete(@Nonnull Metadata file) throws RestException {
-        URL url = getUrl(URL_OPS_DELETE_FILE);
+    void delete(@Nonnull Metadata metadata) throws RestException {
+        final String path = metadata.getPathLower();
+        delete(path);
+    }
+
+    void delete(@Nonnull String path) throws RestException {
+        URL url = getUrl(URL_OPS_DELETE);
         DeleteRequest requestContent = new DeleteRequest();
-        final String path = file.getPathLower();
-        requestContent.setPath(path);
+        String absolute = createAbsolutePath(path);
+        requestContent.setPath(absolute);
         if (StringUtils.isNotEmpty(path) && !"/".equals(path)) {
             JsonObjectRequest<Metadata> request = requestPostRequestResponse(url, requestContent, Metadata.class);
             request.execute();
@@ -217,42 +222,73 @@ public class DropboxV2 implements DropboxAdapter {
     public void pruneFolder(@Nonnull String path, int pruneRootDays) throws RestException {
         Date cutoff = new Date(System.currentTimeMillis() - pruneRootDays * MILLISECONDS_PER_DAY);
         String absolute = createAbsolutePath(path);
-        Metadata metadata = retrieveMetaData(absolute);
-        if (metadata.isDir() && metadata instanceof FolderMetadata) {
-            FolderMetadata folderMetadata = (FolderMetadata) metadata;
-            FolderContent contents = listFiles(folderMetadata);
+        FolderContent contents = listFilesOfPath(absolute);
+        String cursor = null;
+        do {
+            if (cursor != null) {
+                contents = listFilesForCursor(cursor);
+            }
+            for (Metadata entry : contents.getEntries()) {
+                boolean isModifiedSince = isEntryModifiedSince(entry, cutoff);
+                if (!isModifiedSince) {
+                    delete(entry.getPathLower());
+                }
+            }
+            // Paging of the listing
+            cursor = contents.getCursor();
+        }
+        while (contents.hasMore() && cursor != null);
+    }
+
+    public boolean isEntryModifiedSince(@Nonnull Metadata metadata, @Nonnull Date cutoff) throws RestException {
+        boolean isModifiedSince = false;
+        if (metadata instanceof FileMetadata) {
+            Date lastModified = parseDate(((FileMetadata) metadata).getServerModified());
+            isModifiedSince = lastModified.after(cutoff);
+        } else if (metadata instanceof FolderMetadata) {
+            FolderContent contents = listFilesOfFolder((FolderMetadata) metadata);
             String cursor = null;
+            contents:
             do {
                 if (cursor != null) {
-                    contents = listFiles(cursor);
+                    contents = listFilesForCursor(cursor);
                 }
-                for (Metadata entry : contents.getEntries()) {
-                    if (entry.isFile() && entry instanceof FileMetadata) {
-                        FileMetadata fileMetadata = (FileMetadata) entry;
-                        String serverModified = fileMetadata.getServerModified();
-                        Date lastModified;
-                        try {
-                            lastModified = parseDate(serverModified);
-                        } catch (ParseException e) {
-                            throw new RestException(Messages.exception_dropbox_folder_prunedate(serverModified), e);
-                        }
-                        if (lastModified.before(cutoff)) {
-                            delete(fileMetadata);
+                List<Metadata> entries = contents.getEntries();
+                // Evaluate file date first since that is available
+                for (Metadata entry : entries) {
+                    if (entry instanceof FileMetadata) {
+                        isModifiedSince = isEntryModifiedSince(entry, cutoff);
+                        if (isModifiedSince) {
+                            break contents;
                         }
                     }
                 }
-                if (contents.hasMore()) {
-                    cursor = contents.getCursor();
+                // Traverse the given folders after evaluating the files
+                for (Metadata entry : entries) {
+                    if (entry instanceof FolderMetadata) {
+                        isModifiedSince = isEntryModifiedSince(entry, cutoff);
+                        if (isModifiedSince) {
+                            break contents;
+                        }
+                    }
                 }
-            } while (contents.hasMore());
+                // Paging of the listing
+                cursor = contents.getCursor();
+            }
+            while (contents.hasMore() && cursor != null);
         }
+
+        return isModifiedSince;
     }
 
     @VisibleForTesting
-    Date parseDate(String serverModified) throws ParseException {
+    Date parseDate(String serverModified) throws RestException {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
-
-        return df.parse(serverModified);
+        try {
+            return df.parse(serverModified);
+        } catch (ParseException e) {
+            throw new RestException(Messages.exception_dropbox_folder_prunedate(serverModified), e);
+        }
     }
 
     /**
@@ -320,23 +356,28 @@ public class DropboxV2 implements DropboxAdapter {
         finishRequest.execute();
     }
 
-    FolderContent listFiles(@Nonnull FolderMetadata workingFolder) throws RestException {
+    @VisibleForTesting
+    FolderContent listFilesOfFolder(@Nonnull FolderMetadata folder) throws RestException {
+        return listFilesOfPath(folder.getPathLower());
+    }
+
+    private FolderContent listFilesOfPath(@Nonnull String path) throws RestException {
         URL url = getUrl(URL_LIST_FOLDER);
         ListFolderRequest requestContent = new ListFolderRequest();
-        requestContent.setPath(workingFolder.getPathLower());
+        requestContent.setPath(path);
         JsonObjectRequest<FolderContent> request = requestPostRequestResponse(url, requestContent, FolderContent.class);
 
         final FolderContent content;
         try {
             content = request.execute();
         } catch (IOException e) {
-            throw new RestException(Messages.exception_dropbox_folder_list(workingFolder.getName()), e);
+            throw new RestException(Messages.exception_dropbox_folder_list(path), e);
         }
 
         return content;
     }
 
-    private FolderContent listFiles(String cursor) throws RestException {
+    private FolderContent listFilesForCursor(String cursor) throws RestException {
         URL url = getUrl(URL_LIST_FOLDER_CONTINUE);
 
         CursorRequest requestContent = new CursorRequest();

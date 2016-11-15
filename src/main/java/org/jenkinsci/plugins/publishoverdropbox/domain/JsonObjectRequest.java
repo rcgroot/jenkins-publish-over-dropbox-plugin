@@ -206,7 +206,7 @@ public class JsonObjectRequest<T> {
         try {
             OutputStream stream = connection.getOutputStream();
             outputStream = new DataOutputStream(stream);
-            IOUtils.copy(bodyStream, outputStream);
+            IOUtils.copyLarge(bodyStream, outputStream);
             outputStream.flush();
         } finally {
             closeQuietly(bodyStream);
@@ -223,7 +223,7 @@ public class JsonObjectRequest<T> {
         if (inputStream != null && classOfModel != null) {
             InputStreamReader reader = null;
             try {
-                reader = new InputStreamReader(inputStream);
+                reader = new InputStreamReader(new BufferedInputStream(inputStream, 4096));
                 model = gson.fromJson(reader, classOfModel);
             } finally {
                 closeQuietly(reader);

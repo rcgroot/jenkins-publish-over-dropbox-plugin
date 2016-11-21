@@ -88,6 +88,9 @@ public class DropboxHostConfiguration extends BPHostConfiguration<DropboxClient,
     }
 
     private Dropbox createDropbox() {
+        if (token == null) {
+            throw new BapPublisherException(Messages.exception_bap_createclient("Missing token"));
+        }
         return new Dropbox(token.getAccessCode());
     }
 

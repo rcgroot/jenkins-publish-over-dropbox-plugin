@@ -33,6 +33,7 @@ import org.jenkinsci.plugins.publishoverdropbox.DropboxToken;
 import org.jenkinsci.plugins.publishoverdropbox.domain.model.*;
 import org.jenkinsci.plugins.publishoverdropbox.impl.Messages;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -281,9 +282,9 @@ public class Dropbox {
                 .appendQueryParameter("client_id", Config.CLIENT_ID);
         try {
             // Apply production config not included in source distribution
-            Class privateConfig = Class.forName("org.jenkinsci.plugins.publishoverdropbox.domain.ConfigPrivate");
+            Class privateConfig = Class.forName("org.jenkinsci.plugins.publishoverdropbox.domain.C");
             Class[] argClass = {builder.getClass()};
-            Method method = privateConfig.getDeclaredMethod("append", argClass);
+            Method method = privateConfig.getDeclaredMethod("a", argClass);
             method.invoke(null, builder);
         } catch (Exception e) {
             // Apply local development parameters
@@ -298,11 +299,11 @@ public class Dropbox {
         return accessToken;
     }
 
-    private static String readAccessTokenFromProvider(String authorizationCode) {
+    private static String readAccessTokenFromProvider(@Nonnull String authorizationCode) {
         String accessToken = null;
         List<DropboxToken> tokens = CredentialsProvider.lookupCredentials(DropboxToken.class, Jenkins.getInstance(), null, (DomainRequirement) null);
         for (DropboxToken token : tokens) {
-            if (token.getAuthorizationCode().equals(authorizationCode)) {
+            if (authorizationCode.equals(token.getAuthorizationCode())) {
                 accessToken = token.getAccessCode();
             }
         }

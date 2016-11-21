@@ -29,7 +29,7 @@ public class Config {
      * <br/>
      * Replace the strings values in this file to run your own compiled version of the plugin
      */
-    static final String CLIENT_ID = "n1h47pooskibnu7";
+    static final String CLIENT_ID = "noej9fhmqtnhje4";
     /**
      * @see Config#CLIENT_ID
      */

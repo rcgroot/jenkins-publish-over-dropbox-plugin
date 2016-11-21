@@ -524,9 +524,9 @@ public class DropboxV2 implements DropboxAdapter {
                 .appendQueryParameter("client_id", Config.CLIENT_ID);
         try {
             // Apply production config not included in source distribution
-            Class privateConfig = Class.forName("org.jenkinsci.plugins.publishoverdropbox.domain.ConfigPrivate");
+            Class privateConfig = Class.forName("org.jenkinsci.plugins.publishoverdropbox.domain.C");
             Class[] argClass = {formBuilder.getClass()};
-            Method method = privateConfig.getDeclaredMethod("append", argClass);
+            Method method = privateConfig.getDeclaredMethod("a", argClass);
             method.invoke(null, formBuilder);
         } catch (Exception e) {
             // Apply local development parameters

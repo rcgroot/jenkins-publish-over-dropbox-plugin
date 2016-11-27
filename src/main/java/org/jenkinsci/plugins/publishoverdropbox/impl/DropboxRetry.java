@@ -48,7 +48,7 @@ public class DropboxRetry extends Retry implements Describable<DropboxRetry> {
     }
 
     public DropboxRetryDescriptor getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(DropboxRetryDescriptor.class);
+        return Jenkins.getActiveInstance().getDescriptorByType(DropboxRetryDescriptor.class);
     }
 
     public boolean equals(final Object that) {

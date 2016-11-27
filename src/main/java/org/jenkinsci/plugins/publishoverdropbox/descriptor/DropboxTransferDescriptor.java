@@ -46,7 +46,7 @@ public class DropboxTransferDescriptor extends Descriptor<DropboxTransfer> {
     }
 
     public DropboxPublisherPlugin.Descriptor getPublisherPluginDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(DropboxPublisherPlugin.Descriptor.class);
+        return Jenkins.getActiveInstance().getDescriptorByType(DropboxPublisherPlugin.Descriptor.class);
     }
 
     public FormValidation doCheckSourceFiles(@QueryParameter final String value) {

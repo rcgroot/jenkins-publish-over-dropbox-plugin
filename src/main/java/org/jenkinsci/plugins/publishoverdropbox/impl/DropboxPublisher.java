@@ -56,7 +56,7 @@ public class DropboxPublisher extends BapPublisher<DropboxTransfer> implements D
     }
 
     public DropboxPublisherDescriptor getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(DropboxPublisherDescriptor.class);
+        return Jenkins.getActiveInstance().getDescriptorByType(DropboxPublisherDescriptor.class);
     }
 
     public boolean equals(final Object that) {

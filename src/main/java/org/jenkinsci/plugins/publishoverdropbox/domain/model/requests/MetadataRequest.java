@@ -23,4 +23,28 @@ public class MetadataRequest {
     public void setPath(String path) {
         this.path = path;
     }
+
+    public boolean isIncludeMediaInfo() {
+        return includeMediaInfo;
+    }
+
+    public void setIncludeMediaInfo(boolean includeMediaInfo) {
+        this.includeMediaInfo = includeMediaInfo;
+    }
+
+    public boolean isIncludeDeleted() {
+        return includeDeleted;
+    }
+
+    public void setIncludeDeleted(boolean includeDeleted) {
+        this.includeDeleted = includeDeleted;
+    }
+
+    public boolean isIncludeHasExplicitSharedMembers() {
+        return includeHasExplicitSharedMembers;
+    }
+
+    public void setIncludeHasExplicitSharedMembers(boolean includeHasExplicitSharedMembers) {
+        this.includeHasExplicitSharedMembers = includeHasExplicitSharedMembers;
+    }
 }

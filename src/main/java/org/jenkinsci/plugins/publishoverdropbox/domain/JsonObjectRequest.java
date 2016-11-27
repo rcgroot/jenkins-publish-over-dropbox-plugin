@@ -144,8 +144,8 @@ public class JsonObjectRequest<T> {
             connection = (HttpURLConnection) url.openConnection();
             connection.setReadTimeout(timeout);
             connection.setConnectTimeout(timeout);
-            for (String key : headers.keySet()) {
-                connection.addRequestProperty(key, headers.get(key));
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
+                connection.addRequestProperty(entry.getKey(), entry.getValue());
             }
             if (bearerToken != null) {
                 signWithBearerToken(connection);
@@ -223,7 +223,7 @@ public class JsonObjectRequest<T> {
         if (inputStream != null && classOfModel != null) {
             InputStreamReader reader = null;
             try {
-                reader = new InputStreamReader(new BufferedInputStream(inputStream, 4096));
+                reader = new InputStreamReader(new BufferedInputStream(inputStream, 4096), UTF_8);
                 model = gson.fromJson(reader, classOfModel);
             } finally {
                 closeQuietly(reader);

@@ -41,6 +41,7 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
@@ -528,7 +529,7 @@ public class DropboxV2 implements DropboxAdapter {
             Class[] argClass = {formBuilder.getClass()};
             Method method = privateConfig.getDeclaredMethod("a", argClass);
             method.invoke(null, formBuilder);
-        } catch (Exception e) {
+        } catch (InvocationTargetException|NoSuchMethodException|ClassNotFoundException|IllegalAccessException e) {
             // Apply local development parameters
             formBuilder.appendQueryParameter("client_secret", Config.CLIENT_SECRET);
         }
@@ -547,7 +548,7 @@ public class DropboxV2 implements DropboxAdapter {
 
     private static String readAccessTokenFromProvider(String authorizationCode) {
         String accessToken = null;
-        List<DropboxToken> tokens = CredentialsProvider.lookupCredentials(DropboxToken.class, Jenkins.getInstance(), null, (DomainRequirement) null);
+        List<DropboxToken> tokens = CredentialsProvider.lookupCredentials(DropboxToken.class, Jenkins.getActiveInstance(), null, (DomainRequirement) null);
         for (DropboxToken token : tokens) {
             if (token.getAuthorizationCode().equals(authorizationCode)) {
                 accessToken = token.getAccessCode();

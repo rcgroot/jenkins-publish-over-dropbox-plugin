@@ -25,4 +25,36 @@ public class ListFolderRequest {
     public void setPath(String path) {
         this.path = path;
     }
+
+    public boolean isRecursive() {
+        return recursive;
+    }
+
+    public void setRecursive(boolean recursive) {
+        this.recursive = recursive;
+    }
+
+    public boolean isIncludeMediaInfo() {
+        return includeMediaInfo;
+    }
+
+    public void setIncludeMediaInfo(boolean includeMediaInfo) {
+        this.includeMediaInfo = includeMediaInfo;
+    }
+
+    public boolean isIncludeDeleted() {
+        return includeDeleted;
+    }
+
+    public void setIncludeDeleted(boolean includeDeleted) {
+        this.includeDeleted = includeDeleted;
+    }
+
+    public boolean isIncludeHasExplicitShareMembers() {
+        return includeHasExplicitShareMembers;
+    }
+
+    public void setIncludeHasExplicitShareMembers(boolean includeHasExplicitShareMembers) {
+        this.includeHasExplicitShareMembers = includeHasExplicitShareMembers;
+    }
 }

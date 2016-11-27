@@ -38,7 +38,7 @@ public class ErrorResponse {
     @SerializedName("user_message")
     private String userMessage;
 
-    public class Error {
+    public static class Error {
         @Expose
         @SerializedName(".tag")
         private String tag;

@@ -59,7 +59,7 @@ public class DropboxHostConfiguration extends BPHostConfiguration<DropboxClient,
     }
 
     private DropboxToken lookupTokenId(String tokenId) {
-        List<DropboxToken> credentials = CredentialsProvider.lookupCredentials(DropboxToken.class, Jenkins.getInstance(), null, (DomainRequirement) null);
+        List<DropboxToken> credentials = CredentialsProvider.lookupCredentials(DropboxToken.class, Jenkins.getActiveInstance(), null, (DomainRequirement) null);
         for (DropboxToken token : credentials) {
             if (tokenId.equals(token.getId())) {
                 return token;
@@ -109,7 +109,6 @@ public class DropboxHostConfiguration extends BPHostConfiguration<DropboxClient,
     }
 
     private void connect(final DropboxClient client) throws IOException {
-        final BPBuildInfo buildInfo = client.getBuildInfo();
         if (!client.connect()) {
             exception(client, Messages.exception_bap_logInFailed(getToken()));
         }
@@ -122,7 +121,7 @@ public class DropboxHostConfiguration extends BPHostConfiguration<DropboxClient,
     }
 
     public DropboxHostConfigurationDescriptor getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(DropboxHostConfigurationDescriptor.class);
+        return Jenkins.getActiveInstance().getDescriptorByType(DropboxHostConfigurationDescriptor.class);
     }
 
     protected HashCodeBuilder addToHashCode(final HashCodeBuilder builder) {

@@ -66,7 +66,7 @@ public class DropboxPublisherPlugin extends BPPlugin<DropboxPublisher, DropboxCl
 
     @Override
     public Descriptor getDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(Descriptor.class);
+        return Jenkins.getActiveInstance().getDescriptorByType(Descriptor.class);
     }
 
     public DropboxHostConfiguration getConfiguration(final String name) {

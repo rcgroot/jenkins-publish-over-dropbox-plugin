@@ -46,14 +46,6 @@ import java.util.List;
 public class DropboxPublisherPluginDescriptor extends BuildStepDescriptor<Publisher> {
 
     private final CopyOnWriteList<DropboxHostConfiguration> hostConfigurations = new CopyOnWriteList<DropboxHostConfiguration>();
-    /**
-     * null - prevent complaints from xstream
-     */
-    private BPPluginDescriptor.BPDescriptorMessages msg;
-    /**
-     * null - prevent complaints from xstream
-     */
-    private Class hostConfigClass;
 
     public DropboxPublisherPluginDescriptor() {
         super(DropboxPublisherPlugin.class);
@@ -101,11 +93,11 @@ public class DropboxPublisherPluginDescriptor extends BuildStepDescriptor<Publis
     }
 
     public DropboxPublisherDescriptor getPublisherDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(DropboxPublisherDescriptor.class);
+        return Jenkins.getActiveInstance().getDescriptorByType(DropboxPublisherDescriptor.class);
     }
 
     public DropboxHostConfigurationDescriptor getHostConfigurationDescriptor() {
-        return Jenkins.getInstance().getDescriptorByType(DropboxHostConfigurationDescriptor.class);
+        return Jenkins.getActiveInstance().getDescriptorByType(DropboxHostConfigurationDescriptor.class);
     }
 
     public jenkins.plugins.publish_over.view_defaults.BPInstanceConfig.Messages getCommonFieldNames() {
@@ -134,7 +126,7 @@ public class DropboxPublisherPluginDescriptor extends BuildStepDescriptor<Publis
         return new BPBuildInfo(
                 TaskListener.NULL,
                 "",
-                Jenkins.getInstance().getRootPath(),
+                Jenkins.getActiveInstance().getRootPath(),
                 null,
                 null
         );
@@ -142,8 +134,6 @@ public class DropboxPublisherPluginDescriptor extends BuildStepDescriptor<Publis
 
     public Object readResolve() {
         // nuke the legacy config
-        msg = null;
-        hostConfigClass = null;
         return this;
     }
 

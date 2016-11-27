@@ -37,6 +37,8 @@ import java.io.IOException;
 
 public class DropboxTokenImpl extends BaseStandardCredentials implements DropboxToken {
 
+    static final long serialVersionUID = 43L;
+
     @Nonnull
     private final String authorizationCode;
     @Nonnull

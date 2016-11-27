@@ -83,11 +83,11 @@ public class DropboxHostConfigurationDescriptor extends Descriptor<DropboxHostCo
     }
 
     private List<DropboxToken> getDropboxTokens() {
-        return CredentialsProvider.lookupCredentials(DropboxToken.class, Jenkins.getInstance(), null, (DomainRequirement) null);
+        return CredentialsProvider.lookupCredentials(DropboxToken.class, Jenkins.getActiveInstance(), null, (DomainRequirement) null);
     }
 
     public FormValidation doTestConnection(final StaplerRequest request, final StaplerResponse response) {
-        final DropboxPublisherPlugin.Descriptor pluginDescriptor = Jenkins.getInstance().getDescriptorByType(
+        final DropboxPublisherPlugin.Descriptor pluginDescriptor = Jenkins.getActiveInstance().getDescriptorByType(
                 DropboxPublisherPlugin.Descriptor.class);
         return pluginDescriptor.doTestConnection(request, response);
     }

@@ -15,7 +15,7 @@ public class SessionFinish {
         @Expose
         private String mode = "add";
         @Expose
-        @SerializedName("autoRename")
+        @SerializedName("autorename")
         private boolean autoRename = false;
         @Expose
         private boolean mute = false;
